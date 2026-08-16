@@ -14,8 +14,7 @@ interface ShareButtonsProps {
   scores: Record<TraitId, number>;
 }
 
-const KAKAO_REGISTERED_DOMAIN =
-  process.env.NEXT_PUBLIC_SITE_URL || 'https://bdsm-tawny.vercel.app';
+const PRODUCTION_DOMAIN = 'https://bdsm-tawny.vercel.app';
 
 export default function ShareButtons({
   primaryTraitId,
@@ -45,7 +44,7 @@ export default function ShareButtons({
     initKakao();
   }, []);
 
-  // Standard Link Copy: Copies exact current URL (works seamlessly in localhost / preview / custom domain)
+  // Standard Link Copy: Copies exact current URL
   const handleCopyLink = async () => {
     const targetUrl =
       resultUrl || (typeof window !== 'undefined' ? window.location.href : '');
@@ -65,17 +64,19 @@ export default function ShareButtons({
     }
   };
 
-  // Kakao Share: Uses registered domain to satisfy Kakao Web URL whitelist security policy
+  // Kakao Share: Formatted to Kakao SDK Feed Standard Specifications
   const handleKakaoShare = () => {
     initKakao();
 
-    let searchParamsStr = '';
+    // Ensure link URL matches Kakao Developer Console registered domain prefix
+    let targetLink = `${PRODUCTION_DOMAIN}/result`;
     if (typeof window !== 'undefined') {
-      searchParamsStr = window.location.search;
+      const search = window.location.search;
+      targetLink = `${PRODUCTION_DOMAIN}/result${search}`;
     }
 
-    const kakaoTargetUrl = `${KAKAO_REGISTERED_DOMAIN}/result${searchParamsStr}`;
-    const dynamicOgImage = `${KAKAO_REGISTERED_DOMAIN}/api/og?trait=${primaryTraitId}&nickname=${encodeURIComponent(
+    // Dynamic OG Image with absolute HTTPS production URL
+    const dynamicOgImage = `${PRODUCTION_DOMAIN}/api/og?trait=${primaryTraitId}&nickname=${encodeURIComponent(
       nickname || ''
     )}`;
 
@@ -91,16 +92,20 @@ export default function ShareButtons({
           imageWidth: 800,
           imageHeight: 600,
           link: {
-            mobileWebUrl: kakaoTargetUrl,
-            webUrl: kakaoTargetUrl
+            mobileWebUrl: targetLink,
+            webUrl: targetLink
           }
+        },
+        itemContent: {
+          profileText: 'BDSM 동물 성향 연구소',
+          profileImageUrl: `${PRODUCTION_DOMAIN}/app-icon.png`
         },
         buttons: [
           {
-            title: '나와의 궁합 & 결과 확인하기',
+            title: '결과 & 케미 확인하기 💖',
             link: {
-              mobileWebUrl: kakaoTargetUrl,
-              webUrl: kakaoTargetUrl
+              mobileWebUrl: targetLink,
+              webUrl: targetLink
             }
           }
         ]
@@ -111,7 +116,7 @@ export default function ShareButtons({
           .share({
             title: `BDSM 동물 성향 검사 결과: ${trait.animal}`,
             text: `제 성향은 [${trait.animal} - ${trait.nameKo}]입니다. 나와의 궁합을 확인해보세요!`,
-            url: kakaoTargetUrl
+            url: targetLink
           })
           .catch(() => handleCopyLink());
       } else {

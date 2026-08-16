@@ -202,7 +202,7 @@ export const TRAITS: Record<TraitId, TraitInfo> = {
       '양쪽 성향 중 어느 하나를 너무 오래 억누르지 않도록 밸런스를 유지하세요.'
     ],
     bestMatches: ['switch', 'dominant', 'submissive', 'brat'],
-    worstMatches: [],
+    worstMatches: ['degrader', 'slave'],
     challengeMatches: ['sadist', 'masochist', 'master']
   },
 
