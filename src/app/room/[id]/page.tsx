@@ -8,10 +8,10 @@ import { calculateTestResults } from '@/lib/calculate';
 import { RoomData, RoomMember } from '@/types/test';
 import RoomNetworkGraph from '@/components/RoomNetworkGraph';
 import AdBanner from '@/components/AdBanner';
+import { loadKakaoSDK, shareKakaoFeed } from '@/lib/kakao';
 import { Users, Copy, Check, Sparkles, ArrowRight, UserPlus, MessageCircle } from 'lucide-react';
 
 const PRODUCTION_DOMAIN = 'https://bdsm-tawny.vercel.app';
-const KAKAO_JS_KEY = '91f0317e2a9d5d066924b829dc5e8318';
 
 export default function RoomPage() {
   const params = useParams();
@@ -21,20 +21,6 @@ export default function RoomPage() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [currentMember, setCurrentMember] = useState<RoomMember | null>(null);
-
-  // Helper to ensure Kakao SDK is ready
-  const getKakaoSdk = () => {
-    if (typeof window === 'undefined') return null;
-    // @ts-expect-error Kakao SDK script
-    const kakao = window.Kakao;
-    if (kakao) {
-      if (!kakao.isInitialized()) {
-        kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || KAKAO_JS_KEY);
-      }
-      return kakao;
-    }
-    return null;
-  };
 
   // Load current user member info from storage if available
   useEffect(() => {
@@ -92,43 +78,23 @@ export default function RoomPage() {
   };
 
   const handleKakaoShareRoom = () => {
-    const kakao = getKakaoSdk();
     const roomUrl = `${PRODUCTION_DOMAIN}/room/${roomId}`;
     const roomTitle = room?.name || '우리 모임 케미 맵';
     const memberCount = room?.members?.length || 1;
 
-    if (kakao && kakao.Share) {
-      try {
-        kakao.Share.sendDefault({
-          objectType: 'feed',
-          content: {
-            title: `[${roomTitle}] 실시간 BDSM 케미 룸 초대! 🎉`,
-            description: `현재 ${memberCount}명이 모여있어요! 우리 모임의 궁합 지도를 확인해보세요.`,
-            imageUrl: `${PRODUCTION_DOMAIN}/app-icon.png`,
-            imageWidth: 640,
-            imageHeight: 640,
-            link: {
-              mobileWebUrl: roomUrl,
-              webUrl: roomUrl
-            }
-          },
-          buttons: [
-            {
-              title: '같이 결과 보기',
-              link: {
-                mobileWebUrl: roomUrl,
-                webUrl: roomUrl
-              }
-            }
-          ]
-        });
-        return;
-      } catch (err) {
-        console.error('Failed to send Kakao room share', err);
-      }
-    }
+    loadKakaoSDK(() => {
+      const success = shareKakaoFeed({
+        title: `[${roomTitle}] 실시간 BDSM 케미 룸 초대! 🎉`,
+        description: `현재 ${memberCount}명이 모여있어요! 우리 모임의 궁합 지도를 확인해보세요.`,
+        imageUrl: `${PRODUCTION_DOMAIN}/app-icon.png`,
+        targetUrl: roomUrl,
+        buttonTitle: '같이 결과 보기'
+      });
 
-    handleCopyRoomLink();
+      if (!success) {
+        handleCopyRoomLink();
+      }
+    });
   };
 
   const handleJoinMyResult = async () => {

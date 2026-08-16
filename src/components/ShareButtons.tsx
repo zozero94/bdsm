@@ -6,6 +6,7 @@ import { TRAITS } from '@/data/traits';
 import { Check, MessageCircle, Users, Copy, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createRoom } from '@/lib/firebase';
+import { loadKakaoSDK, shareKakaoFeed } from '@/lib/kakao';
 
 interface ShareButtonsProps {
   primaryTraitId: TraitId;
@@ -15,7 +16,6 @@ interface ShareButtonsProps {
 }
 
 const PRODUCTION_DOMAIN = 'https://bdsm-tawny.vercel.app';
-const KAKAO_JS_KEY = '91f0317e2a9d5d066924b829dc5e8318';
 
 export default function ShareButtons({
   primaryTraitId,
@@ -27,20 +27,6 @@ export default function ShareButtons({
   const [copied, setCopied] = useState(false);
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const trait = TRAITS[primaryTraitId] || TRAITS.dominant;
-
-  // Helper to ensure Kakao SDK is ready
-  const getKakaoSdk = () => {
-    if (typeof window === 'undefined') return null;
-    // @ts-expect-error Kakao SDK script
-    const kakao = window.Kakao;
-    if (kakao) {
-      if (!kakao.isInitialized()) {
-        kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || KAKAO_JS_KEY);
-      }
-      return kakao;
-    }
-    return null;
-  };
 
   // Standard Link Copy
   const handleCopyLink = async () => {
@@ -62,10 +48,8 @@ export default function ShareButtons({
     }
   };
 
-  // Kakao Share: Kakao Developers Official Specification
+  // Kakao Share using wedding-invitation callback pipeline
   const handleKakaoShare = () => {
-    const kakao = getKakaoSdk();
-
     let targetLink = `${PRODUCTION_DOMAIN}/result`;
     if (typeof window !== 'undefined') {
       const search = window.location.search;
@@ -76,39 +60,20 @@ export default function ShareButtons({
       nickname || ''
     )}`;
 
-    if (kakao && kakao.Share) {
-      try {
-        kakao.Share.sendDefault({
-          objectType: 'feed',
-          content: {
-            title: `${nickname ? nickname + '님의 ' : ''}BDSM 성향: [${trait.animal}]`,
-            description: `"${trait.title}" - 나와의 성향 궁합을 확인해보세요!`,
-            imageUrl: dynamicOgImage,
-            imageWidth: 800,
-            imageHeight: 600,
-            link: {
-              mobileWebUrl: targetLink,
-              webUrl: targetLink
-            }
-          },
-          buttons: [
-            {
-              title: '나는 어떤 성향일까?',
-              link: {
-                mobileWebUrl: targetLink,
-                webUrl: targetLink
-              }
-            }
-          ]
-        });
-        return;
-      } catch (err) {
-        console.error('Failed to send Kakao message', err);
-      }
-    }
+    loadKakaoSDK(() => {
+      const success = shareKakaoFeed({
+        title: `${nickname ? nickname + '님의 ' : ''}BDSM 성향: [${trait.animal}]`,
+        description: `"${trait.title}" - 나와의 성향 궁합을 확인해보세요!`,
+        imageUrl: dynamicOgImage,
+        targetUrl: targetLink,
+        buttonTitle: '나는 어떤 성향일까?'
+      });
 
-    // Fallback if Kakao is blocked by in-app browser or ad-blocker
-    handleCopyLink();
+      if (!success) {
+        // Fallback to clipboard copy
+        handleCopyLink();
+      }
+    });
   };
 
   const handleCreateRoom = async () => {
