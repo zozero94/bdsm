@@ -8,7 +8,9 @@ import { calculateTestResults } from '@/lib/calculate';
 import { RoomData, RoomMember } from '@/types/test';
 import RoomNetworkGraph from '@/components/RoomNetworkGraph';
 import AdBanner from '@/components/AdBanner';
-import { Users, Copy, Check, Sparkles, ArrowRight, UserPlus } from 'lucide-react';
+import { Users, Copy, Check, Sparkles, ArrowRight, UserPlus, MessageCircle } from 'lucide-react';
+
+const PRODUCTION_DOMAIN = 'https://bdsm-tawny.vercel.app';
 
 export default function RoomPage() {
   const params = useParams();
@@ -18,6 +20,23 @@ export default function RoomPage() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [currentMember, setCurrentMember] = useState<RoomMember | null>(null);
+
+  // Initialize Kakao SDK
+  const initKakao = () => {
+    const kakaoKey =
+      process.env.NEXT_PUBLIC_KAKAO_JS_KEY || '91f0317e2a9d5d066924b829dc5e8318';
+    if (kakaoKey && typeof window !== 'undefined') {
+      // @ts-expect-error Kakao SDK script
+      if (window.Kakao && !window.Kakao.isInitialized()) {
+        // @ts-expect-error Kakao SDK script
+        window.Kakao.init(kakaoKey);
+      }
+    }
+  };
+
+  useEffect(() => {
+    initKakao();
+  }, []);
 
   // Load current user member info from storage if available
   useEffect(() => {
@@ -30,7 +49,10 @@ export default function RoomPage() {
       // Get or create unique user id
       let userId = localStorage.getItem('bdsm_user_id');
       if (!userId) {
-        userId = 'u_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+        userId =
+          'u_' +
+          Math.random().toString(36).substring(2, 9) +
+          Date.now().toString(36);
         localStorage.setItem('bdsm_user_id', userId);
       }
 
@@ -72,6 +94,57 @@ export default function RoomPage() {
     }
   };
 
+  const handleKakaoShareRoom = () => {
+    initKakao();
+    const roomUrl = `${PRODUCTION_DOMAIN}/room/${roomId}`;
+    const roomTitle = room?.name || '우리 모임 케미 맵';
+    const memberCount = room?.members?.length || 1;
+
+    // @ts-expect-error Kakao SDK
+    if (typeof window !== 'undefined' && window.Kakao && window.Kakao.isInitialized()) {
+      // @ts-expect-error Kakao SDK
+      window.Kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: {
+          title: `[${roomTitle}] 실시간 케미 룸에 초대합니다! 🎉`,
+          description: `현재 ${memberCount}명이 참여 중! 친구들과의 성향 궁합 지도를 확인하고 내 캐릭터도 등록해보세요.`,
+          imageUrl: `${PRODUCTION_DOMAIN}/app-icon.png`,
+          imageWidth: 800,
+          imageHeight: 600,
+          link: {
+            mobileWebUrl: roomUrl,
+            webUrl: roomUrl
+          }
+        },
+        itemContent: {
+          profileText: 'BDSM 동물 성향 연구소',
+          profileImageUrl: `${PRODUCTION_DOMAIN}/app-icon.png`
+        },
+        buttons: [
+          {
+            title: '케미 룸 입장 & 궁합 보기 💖',
+            link: {
+              mobileWebUrl: roomUrl,
+              webUrl: roomUrl
+            }
+          }
+        ]
+      });
+    } else {
+      if (navigator.share) {
+        navigator
+          .share({
+            title: `[${roomTitle}] 케미 룸 초대`,
+            text: `친구들과의 실시간 궁합 관계도를 확인해 보세요!`,
+            url: roomUrl
+          })
+          .catch(() => handleCopyRoomLink());
+      } else {
+        handleCopyRoomLink();
+      }
+    }
+  };
+
   const handleJoinMyResult = async () => {
     if (!currentMember || !roomId) return;
     await joinRoom(roomId, currentMember);
@@ -89,8 +162,12 @@ export default function RoomPage() {
   if (!room) {
     return (
       <div className="w-full py-20 flex flex-col items-center text-center gap-4">
-        <h2 className="text-lg font-bold text-white">존재하지 않거나 만료된 방입니다.</h2>
-        <p className="text-xs text-slate-400">새로운 케미 방을 생성해 보세요!</p>
+        <h2 className="text-lg font-bold text-white">
+          존재하지 않거나 만료된 방입니다.
+        </h2>
+        <p className="text-xs text-slate-400">
+          새로운 케미 방을 생성해 보세요!
+        </p>
         <Link
           href="/"
           className="py-3 px-6 rounded-2xl bg-purple-600 text-white font-bold text-xs shadow-lg"
@@ -102,7 +179,9 @@ export default function RoomPage() {
   }
 
   const isAlreadyJoined =
-    currentMember && room.members && room.members.some((m) => m.id === currentMember.id);
+    currentMember &&
+    room.members &&
+    room.members.some((m) => m.id === currentMember.id);
 
   return (
     <div className="w-full flex flex-col gap-6 items-center">
@@ -124,21 +203,31 @@ export default function RoomPage() {
           친구들이 검사를 완료하면 실시간으로 캐릭터가 추가되고, 서로 간의 꿀케미/상극 궁합 랭킹이 업데이트됩니다!
         </p>
 
-        {/* Invite Buttons */}
-        <div className="w-full flex items-center justify-center gap-2 pt-2">
+        {/* Action Buttons (Kakao Share + Copy Link) */}
+        <div className="w-full grid grid-cols-2 gap-2.5 pt-2">
+          {/* Kakao Share */}
+          <button
+            onClick={handleKakaoShareRoom}
+            className="flex items-center justify-center gap-1.5 py-3 px-3 rounded-2xl bg-[#FEE500] hover:bg-[#FADA0A] text-[#191919] font-extrabold text-xs shadow-lg shadow-yellow-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <MessageCircle className="w-4 h-4 fill-[#191919]" />
+            <span>카톡으로 친구 초대</span>
+          </button>
+
+          {/* Copy Link */}
           <button
             onClick={handleCopyRoomLink}
-            className="flex-1 max-w-xs py-3 px-4 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold shadow-lg shadow-purple-600/30 flex items-center justify-center gap-1.5 hover:opacity-90 transition-all"
+            className="flex items-center justify-center gap-1.5 py-3 px-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700/80 shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             {copied ? (
               <>
                 <Check className="w-4 h-4 text-emerald-300" />
-                <span>초대 링크 복사 완료!</span>
+                <span className="text-emerald-300">복사 완료!</span>
               </>
             ) : (
               <>
-                <Copy className="w-4 h-4" />
-                <span>친구 초대 링크 복사</span>
+                <Copy className="w-4 h-4 text-slate-300" />
+                <span>초대 링크 복사</span>
               </>
             )}
           </button>

@@ -64,18 +64,16 @@ export default function ShareButtons({
     }
   };
 
-  // Kakao Share: Formatted to Kakao SDK Feed Standard Specifications
+  // Kakao Share: Standard Feed Template
   const handleKakaoShare = () => {
     initKakao();
 
-    // Ensure link URL matches Kakao Developer Console registered domain prefix
     let targetLink = `${PRODUCTION_DOMAIN}/result`;
     if (typeof window !== 'undefined') {
       const search = window.location.search;
       targetLink = `${PRODUCTION_DOMAIN}/result${search}`;
     }
 
-    // Dynamic OG Image with absolute HTTPS production URL
     const dynamicOgImage = `${PRODUCTION_DOMAIN}/api/og?trait=${primaryTraitId}&nickname=${encodeURIComponent(
       nickname || ''
     )}`;
@@ -96,13 +94,9 @@ export default function ShareButtons({
             webUrl: targetLink
           }
         },
-        itemContent: {
-          profileText: 'BDSM 동물 성향 연구소',
-          profileImageUrl: `${PRODUCTION_DOMAIN}/app-icon.png`
-        },
         buttons: [
           {
-            title: '결과 & 케미 확인하기 💖',
+            title: '결과 & 궁합 확인하기 💖',
             link: {
               mobileWebUrl: targetLink,
               webUrl: targetLink
