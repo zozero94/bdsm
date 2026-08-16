@@ -3,7 +3,8 @@ import { NextRequest } from 'next/server';
 import { TRAITS } from '@/data/traits';
 import { TraitId } from '@/types/test';
 
-export const runtime = 'edge';
+// Use Node.js runtime to avoid Vercel 1MB Edge Function limit (Node.js limit is 50MB)
+export const runtime = 'nodejs';
 
 const BG_GRADIENTS: Record<TraitId, string> = {
   dominant: 'linear-gradient(135deg, #3b0764 0%, #0f172a 100%)',
@@ -31,11 +32,11 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const traitId = (searchParams.get('trait') || 'dominant') as TraitId;
     const rawNickname = searchParams.get('nickname') || '';
-    const nickname = rawNickname.slice(0, 12); // Defend against layout breaking
+    const nickname = rawNickname.slice(0, 12);
 
     const trait = TRAITS[traitId] || TRAITS.dominant;
 
-    // Load Korean font (Pretendard Bold WOFF) for Satori Edge SVG engine
+    // Load Korean font (Pretendard Bold WOFF)
     let fontData: ArrayBuffer | null = null;
     try {
       const fontRes = await fetch(
