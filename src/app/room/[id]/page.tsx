@@ -22,20 +22,19 @@ export default function RoomPage() {
   const [copied, setCopied] = useState(false);
   const [currentMember, setCurrentMember] = useState<RoomMember | null>(null);
 
-  // Initialize Kakao SDK Helper
-  const initKakao = () => {
-    if (typeof window === 'undefined') return;
-
-    // @ts-expect-error Kakao SDK
-    if (window.Kakao && !window.Kakao.isInitialized()) {
-      // @ts-expect-error Kakao SDK
-      window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || KAKAO_JS_KEY);
+  // Helper to ensure Kakao SDK is ready
+  const getKakaoSdk = () => {
+    if (typeof window === 'undefined') return null;
+    // @ts-expect-error Kakao SDK script
+    const kakao = window.Kakao;
+    if (kakao) {
+      if (!kakao.isInitialized()) {
+        kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || KAKAO_JS_KEY);
+      }
+      return kakao;
     }
+    return null;
   };
-
-  useEffect(() => {
-    initKakao();
-  }, []);
 
   // Load current user member info from storage if available
   useEffect(() => {
@@ -45,7 +44,6 @@ export default function RoomPage() {
       const rawAnswers = localStorage.getItem('bdsm_answers');
       const nickname = localStorage.getItem('bdsm_nickname') || '익명의 탐험가';
 
-      // Get or create unique user id
       let userId = localStorage.getItem('bdsm_user_id');
       if (!userId) {
         userId =
@@ -94,50 +92,43 @@ export default function RoomPage() {
   };
 
   const handleKakaoShareRoom = () => {
-    initKakao();
+    const kakao = getKakaoSdk();
     const roomUrl = `${PRODUCTION_DOMAIN}/room/${roomId}`;
     const roomTitle = room?.name || '우리 모임 케미 맵';
     const memberCount = room?.members?.length || 1;
 
-    // @ts-expect-error Kakao SDK
-    if (typeof window !== 'undefined' && window.Kakao && window.Kakao.isInitialized()) {
-      // @ts-expect-error Kakao SDK
-      window.Kakao.Share.sendDefault({
-        objectType: 'feed',
-        content: {
-          title: `[${roomTitle}] 실시간 BDSM 케미 룸 초대! 🎉`,
-          description: `현재 ${memberCount}명이 모여있어요! 우리 모임의 궁합 지도를 확인해보세요.`,
-          imageUrl: `${PRODUCTION_DOMAIN}/app-icon.png`,
-          imageWidth: 640,
-          imageHeight: 640,
-          link: {
-            mobileWebUrl: roomUrl,
-            webUrl: roomUrl
-          }
-        },
-        buttons: [
-          {
-            title: '같이 결과 보기',
+    if (kakao && kakao.Share) {
+      try {
+        kakao.Share.sendDefault({
+          objectType: 'feed',
+          content: {
+            title: `[${roomTitle}] 실시간 BDSM 케미 룸 초대! 🎉`,
+            description: `현재 ${memberCount}명이 모여있어요! 우리 모임의 궁합 지도를 확인해보세요.`,
+            imageUrl: `${PRODUCTION_DOMAIN}/app-icon.png`,
+            imageWidth: 640,
+            imageHeight: 640,
             link: {
               mobileWebUrl: roomUrl,
               webUrl: roomUrl
             }
-          }
-        ]
-      });
-    } else {
-      if (navigator.share) {
-        navigator
-          .share({
-            title: `[${roomTitle}] 케미 룸 초대`,
-            text: `친구들과의 실시간 궁합 관계도를 확인해 보세요!`,
-            url: roomUrl
-          })
-          .catch(() => handleCopyRoomLink());
-      } else {
-        handleCopyRoomLink();
+          },
+          buttons: [
+            {
+              title: '같이 결과 보기',
+              link: {
+                mobileWebUrl: roomUrl,
+                webUrl: roomUrl
+              }
+            }
+          ]
+        });
+        return;
+      } catch (err) {
+        console.error('Failed to send Kakao room share', err);
       }
     }
+
+    handleCopyRoomLink();
   };
 
   const handleJoinMyResult = async () => {

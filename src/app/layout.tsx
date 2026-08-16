@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import Script from 'next/script';
+import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import './globals.css';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: 'BDSM 동물 성향 테스트 | 내 안의 캐릭터 & 친구 케미 지도',
@@ -11,26 +11,36 @@ export const metadata: Metadata = {
   keywords: [
     'BDSM테스트',
     '성향테스트',
+    '동물성향테스트',
     '심리테스트',
-    '도미넌트',
-    '서브미시브',
-    '새디스트',
-    '마조히스트',
-    '케미지도',
-    '성향궁합'
+    '성격유형검사',
+    'BDSM케미',
+    '궁합테스트',
+    '연애성향'
   ],
+  authors: [{ name: 'BDSM Lab' }],
   openGraph: {
-    title: 'BDSM 동물 성향 테스트 🐾',
-    description: '나의 숨겨진 성향 동물은 무엇일까? 12가지 캐릭터와 케미 궁합 확인하기',
-    url: 'https://bdsm-test.vercel.app',
-    siteName: 'BDSM 성향 연구소',
+    title: 'BDSM 동물 성향 테스트 | 내 안의 동물 캐릭터는?',
+    description:
+      '18가지 귀여운 동물 캐릭터와 정밀 가중치 분석으로 알아보는 BDSM 성향 테스트! 친구들과 실시간 궁합 지도도 만들어보세요.',
+    url: 'https://bdsm-tawny.vercel.app',
+    siteName: 'BDSM 동물 성향 연구소',
+    images: [
+      {
+        url: 'https://bdsm-tawny.vercel.app/app-icon.png',
+        width: 1200,
+        height: 630,
+        alt: 'BDSM 동물 성향 테스트'
+      }
+    ],
     locale: 'ko_KR',
     type: 'website'
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'BDSM 동물 성향 테스트 🐾',
-    description: '나의 숨겨진 성향 동물과 친구들과의 케미 지도를 확인해보세요!'
+    title: 'BDSM 동물 성향 테스트',
+    description: '귀여운 동물 캐릭터로 알아보는 18가지 성향 분석 & 친구 케미 맵',
+    images: ['https://bdsm-tawny.vercel.app/app-icon.png']
   }
 };
 
@@ -44,10 +54,11 @@ export default function RootLayout({
   return (
     <html lang="ko" className="dark">
       <head>
-        {/* Kakao JavaScript SDK */}
+        {/* Kakao JavaScript SDK: Load Once & Initialize Immediately */}
         <Script
           src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
           strategy="afterInteractive"
+          crossOrigin="anonymous"
         />
 
         {/* Google AdSense Script (When Client ID is provided) */}
@@ -60,9 +71,9 @@ export default function RootLayout({
           />
         )}
       </head>
-      <body className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans antialiased selection:bg-purple-500 selection:text-white">
+      <body className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-between antialiased selection:bg-purple-500 selection:text-white">
         <Header />
-        <main className="flex-1 w-full max-w-md mx-auto px-4 py-6 flex flex-col">
+        <main className="w-full max-w-md px-4 py-6 flex-1 flex flex-col justify-start">
           {children}
         </main>
         <Footer />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { TraitId } from '@/types/test';
 import { TRAITS } from '@/data/traits';
 import { Check, MessageCircle, Users, Copy, Sparkles } from 'lucide-react';
@@ -28,20 +28,19 @@ export default function ShareButtons({
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const trait = TRAITS[primaryTraitId] || TRAITS.dominant;
 
-  // Initialize Kakao SDK Helper
-  const initKakao = () => {
-    if (typeof window === 'undefined') return;
-
-    // @ts-expect-error Kakao SDK
-    if (window.Kakao && !window.Kakao.isInitialized()) {
-      // @ts-expect-error Kakao SDK
-      window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || KAKAO_JS_KEY);
+  // Helper to ensure Kakao SDK is ready
+  const getKakaoSdk = () => {
+    if (typeof window === 'undefined') return null;
+    // @ts-expect-error Kakao SDK script
+    const kakao = window.Kakao;
+    if (kakao) {
+      if (!kakao.isInitialized()) {
+        kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || KAKAO_JS_KEY);
+      }
+      return kakao;
     }
+    return null;
   };
-
-  useEffect(() => {
-    initKakao();
-  }, []);
 
   // Standard Link Copy
   const handleCopyLink = async () => {
@@ -63,9 +62,9 @@ export default function ShareButtons({
     }
   };
 
-  // Kakao Share: Exact format requested
+  // Kakao Share: Kakao Developers Official Specification
   const handleKakaoShare = () => {
-    initKakao();
+    const kakao = getKakaoSdk();
 
     let targetLink = `${PRODUCTION_DOMAIN}/result`;
     if (typeof window !== 'undefined') {
@@ -77,45 +76,39 @@ export default function ShareButtons({
       nickname || ''
     )}`;
 
-    // @ts-expect-error Kakao SDK
-    if (typeof window !== 'undefined' && window.Kakao && window.Kakao.isInitialized()) {
-      // @ts-expect-error Kakao SDK
-      window.Kakao.Share.sendDefault({
-        objectType: 'feed',
-        content: {
-          title: `${nickname ? nickname + '님의 ' : ''}BDSM 성향: [${trait.animal}]`,
-          description: `"${trait.title}" - 나와의 성향 궁합을 확인해보세요!`,
-          imageUrl: dynamicOgImage,
-          imageWidth: 800,
-          imageHeight: 600,
-          link: {
-            mobileWebUrl: targetLink,
-            webUrl: targetLink
-          }
-        },
-        buttons: [
-          {
-            title: '나는 어떤 성향일까?',
+    if (kakao && kakao.Share) {
+      try {
+        kakao.Share.sendDefault({
+          objectType: 'feed',
+          content: {
+            title: `${nickname ? nickname + '님의 ' : ''}BDSM 성향: [${trait.animal}]`,
+            description: `"${trait.title}" - 나와의 성향 궁합을 확인해보세요!`,
+            imageUrl: dynamicOgImage,
+            imageWidth: 800,
+            imageHeight: 600,
             link: {
               mobileWebUrl: targetLink,
               webUrl: targetLink
             }
-          }
-        ]
-      });
-    } else {
-      if (navigator.share) {
-        navigator
-          .share({
-            title: `BDSM 동물 성향 검사 결과: ${trait.animal}`,
-            text: `제 성향은 [${trait.animal} - ${trait.nameKo}]입니다. 나와의 궁합을 확인해보세요!`,
-            url: targetLink
-          })
-          .catch(() => handleCopyLink());
-      } else {
-        handleCopyLink();
+          },
+          buttons: [
+            {
+              title: '나는 어떤 성향일까?',
+              link: {
+                mobileWebUrl: targetLink,
+                webUrl: targetLink
+              }
+            }
+          ]
+        });
+        return;
+      } catch (err) {
+        console.error('Failed to send Kakao message', err);
       }
     }
+
+    // Fallback if Kakao is blocked by in-app browser or ad-blocker
+    handleCopyLink();
   };
 
   const handleCreateRoom = async () => {
