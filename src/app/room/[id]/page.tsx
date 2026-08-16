@@ -22,51 +22,19 @@ export default function RoomPage() {
   const [copied, setCopied] = useState(false);
   const [currentMember, setCurrentMember] = useState<RoomMember | null>(null);
 
-  // Ensure Kakao SDK is initialized
-  const ensureKakaoInit = async (): Promise<boolean> => {
-    if (typeof window === 'undefined') return false;
+  // Initialize Kakao SDK Helper
+  const initKakao = () => {
+    if (typeof window === 'undefined') return;
 
     // @ts-expect-error Kakao SDK
-    if (window.Kakao && window.Kakao.isInitialized && window.Kakao.isInitialized()) {
-      return true;
+    if (window.Kakao && !window.Kakao.isInitialized()) {
+      // @ts-expect-error Kakao SDK
+      window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || KAKAO_JS_KEY);
     }
-
-    // @ts-expect-error Kakao SDK
-    if (window.Kakao && window.Kakao.init) {
-      try {
-        // @ts-expect-error Kakao SDK
-        window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || KAKAO_JS_KEY);
-        // @ts-expect-error Kakao SDK
-        return window.Kakao.isInitialized();
-      } catch (e) {
-        console.error('Kakao init error', e);
-      }
-    }
-
-    return new Promise((resolve) => {
-      const script = document.createElement('script');
-      script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js';
-      script.async = true;
-      script.onload = () => {
-        try {
-          // @ts-expect-error Kakao SDK
-          if (window.Kakao && !window.Kakao.isInitialized()) {
-            // @ts-expect-error Kakao SDK
-            window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || KAKAO_JS_KEY);
-          }
-          // @ts-expect-error Kakao SDK
-          resolve(window.Kakao && window.Kakao.isInitialized());
-        } catch {
-          resolve(false);
-        }
-      };
-      script.onerror = () => resolve(false);
-      document.head.appendChild(script);
-    });
   };
 
   useEffect(() => {
-    ensureKakaoInit();
+    initKakao();
   }, []);
 
   // Load current user member info from storage if available
@@ -125,46 +93,51 @@ export default function RoomPage() {
     }
   };
 
-  const handleKakaoShareRoom = async () => {
-    const isReady = await ensureKakaoInit();
+  const handleKakaoShareRoom = () => {
+    initKakao();
     const roomUrl = `${PRODUCTION_DOMAIN}/room/${roomId}`;
     const roomTitle = room?.name || '우리 모임 케미 맵';
     const memberCount = room?.members?.length || 1;
 
     // @ts-expect-error Kakao SDK
-    if (isReady && window.Kakao && window.Kakao.Share) {
-      try {
-        // @ts-expect-error Kakao SDK
-        window.Kakao.Share.sendDefault({
-          objectType: 'feed',
-          content: {
-            title: `[${roomTitle}] 케미 룸 초대! 🎉`,
-            description: `현재 ${memberCount}명이 모여있어요! 우리 모임의 궁합 지도를 확인하고 내 캐릭터도 등록해보세요.`,
-            imageUrl: `${PRODUCTION_DOMAIN}/app-icon.png`,
-            imageWidth: 640,
-            imageHeight: 640,
+    if (typeof window !== 'undefined' && window.Kakao && window.Kakao.isInitialized()) {
+      // @ts-expect-error Kakao SDK
+      window.Kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: {
+          title: `[${roomTitle}] 실시간 BDSM 케미 룸 초대! 🎉`,
+          description: `현재 ${memberCount}명이 모여있어요! 우리 모임의 궁합 지도를 확인해보세요.`,
+          imageUrl: `${PRODUCTION_DOMAIN}/app-icon.png`,
+          imageWidth: 640,
+          imageHeight: 640,
+          link: {
+            mobileWebUrl: roomUrl,
+            webUrl: roomUrl
+          }
+        },
+        buttons: [
+          {
+            title: '같이 결과 보기',
             link: {
               mobileWebUrl: roomUrl,
               webUrl: roomUrl
             }
-          },
-          buttons: [
-            {
-              title: '케미 룸 입장하기',
-              link: {
-                mobileWebUrl: roomUrl,
-                webUrl: roomUrl
-              }
-            }
-          ]
-        });
-        return;
-      } catch (err) {
-        console.error('Failed to send Kakao room share', err);
+          }
+        ]
+      });
+    } else {
+      if (navigator.share) {
+        navigator
+          .share({
+            title: `[${roomTitle}] 케미 룸 초대`,
+            text: `친구들과의 실시간 궁합 관계도를 확인해 보세요!`,
+            url: roomUrl
+          })
+          .catch(() => handleCopyRoomLink());
+      } else {
+        handleCopyRoomLink();
       }
     }
-
-    handleCopyRoomLink();
   };
 
   const handleJoinMyResult = async () => {

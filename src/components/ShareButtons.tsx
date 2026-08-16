@@ -28,51 +28,19 @@ export default function ShareButtons({
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const trait = TRAITS[primaryTraitId] || TRAITS.dominant;
 
-  // Ensure Kakao SDK is fully loaded and initialized
-  const ensureKakaoInit = async (): Promise<boolean> => {
-    if (typeof window === 'undefined') return false;
+  // Initialize Kakao SDK Helper
+  const initKakao = () => {
+    if (typeof window === 'undefined') return;
 
     // @ts-expect-error Kakao SDK
-    if (window.Kakao && window.Kakao.isInitialized && window.Kakao.isInitialized()) {
-      return true;
+    if (window.Kakao && !window.Kakao.isInitialized()) {
+      // @ts-expect-error Kakao SDK
+      window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || KAKAO_JS_KEY);
     }
-
-    // @ts-expect-error Kakao SDK
-    if (window.Kakao && window.Kakao.init) {
-      try {
-        // @ts-expect-error Kakao SDK
-        window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || KAKAO_JS_KEY);
-        // @ts-expect-error Kakao SDK
-        return window.Kakao.isInitialized();
-      } catch (e) {
-        console.error('Kakao init error', e);
-      }
-    }
-
-    return new Promise((resolve) => {
-      const script = document.createElement('script');
-      script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js';
-      script.async = true;
-      script.onload = () => {
-        try {
-          // @ts-expect-error Kakao SDK
-          if (window.Kakao && !window.Kakao.isInitialized()) {
-            // @ts-expect-error Kakao SDK
-            window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || KAKAO_JS_KEY);
-          }
-          // @ts-expect-error Kakao SDK
-          resolve(window.Kakao && window.Kakao.isInitialized());
-        } catch {
-          resolve(false);
-        }
-      };
-      script.onerror = () => resolve(false);
-      document.head.appendChild(script);
-    });
   };
 
   useEffect(() => {
-    ensureKakaoInit();
+    initKakao();
   }, []);
 
   // Standard Link Copy
@@ -95,9 +63,9 @@ export default function ShareButtons({
     }
   };
 
-  // Kakao Share: Strictly adhering to Kakao Feed template specifications
-  const handleKakaoShare = async () => {
-    const isReady = await ensureKakaoInit();
+  // Kakao Share: Exact format requested
+  const handleKakaoShare = () => {
+    initKakao();
 
     let targetLink = `${PRODUCTION_DOMAIN}/result`;
     if (typeof window !== 'undefined') {
@@ -105,42 +73,49 @@ export default function ShareButtons({
       targetLink = `${PRODUCTION_DOMAIN}/result${search}`;
     }
 
-    const staticThumbnail = `${PRODUCTION_DOMAIN}/app-icon.png`;
+    const dynamicOgImage = `${PRODUCTION_DOMAIN}/api/og?trait=${primaryTraitId}&nickname=${encodeURIComponent(
+      nickname || ''
+    )}`;
 
     // @ts-expect-error Kakao SDK
-    if (isReady && window.Kakao && window.Kakao.Share) {
-      try {
-        // @ts-expect-error Kakao SDK
-        window.Kakao.Share.sendDefault({
-          objectType: 'feed',
-          content: {
-            title: `${nickname ? nickname + '님의 ' : ''}BDSM 성향: [${trait.animal}]`,
-            description: `${trait.title} - 나와의 성향 궁합을 확인해보세요!`,
-            imageUrl: staticThumbnail,
-            imageWidth: 640,
-            imageHeight: 640,
+    if (typeof window !== 'undefined' && window.Kakao && window.Kakao.isInitialized()) {
+      // @ts-expect-error Kakao SDK
+      window.Kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: {
+          title: `${nickname ? nickname + '님의 ' : ''}BDSM 성향: [${trait.animal}]`,
+          description: `"${trait.title}" - 나와의 성향 궁합을 확인해보세요!`,
+          imageUrl: dynamicOgImage,
+          imageWidth: 800,
+          imageHeight: 600,
+          link: {
+            mobileWebUrl: targetLink,
+            webUrl: targetLink
+          }
+        },
+        buttons: [
+          {
+            title: '나는 어떤 성향일까?',
             link: {
               mobileWebUrl: targetLink,
               webUrl: targetLink
             }
-          },
-          buttons: [
-            {
-              title: '결과 확인하기',
-              link: {
-                mobileWebUrl: targetLink,
-                webUrl: targetLink
-              }
-            }
-          ]
-        });
-        return;
-      } catch (err) {
-        console.error('Failed to send Kakao message', err);
+          }
+        ]
+      });
+    } else {
+      if (navigator.share) {
+        navigator
+          .share({
+            title: `BDSM 동물 성향 검사 결과: ${trait.animal}`,
+            text: `제 성향은 [${trait.animal} - ${trait.nameKo}]입니다. 나와의 궁합을 확인해보세요!`,
+            url: targetLink
+          })
+          .catch(() => handleCopyLink());
+      } else {
+        handleCopyLink();
       }
     }
-
-    handleCopyLink();
   };
 
   const handleCreateRoom = async () => {

@@ -46,8 +46,8 @@ export default function RootLayout({
       <head>
         {/* Kakao JavaScript SDK */}
         <Script
-          src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.0/kakao.min.js"
-          strategy="lazyOnload"
+          src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
+          strategy="afterInteractive"
         />
 
         {/* Google AdSense Script (When Client ID is provided) */}
