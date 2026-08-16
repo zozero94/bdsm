@@ -14,6 +14,8 @@ interface ShareButtonsProps {
   scores: Record<TraitId, number>;
 }
 
+const PRODUCTION_DOMAIN = 'https://bdsm-tawny.vercel.app';
+
 export default function ShareButtons({
   primaryTraitId,
   nickname,
@@ -25,9 +27,18 @@ export default function ShareButtons({
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const trait = TRAITS[primaryTraitId] || TRAITS.dominant;
 
+  // Ensure sharing link always points to registered production domain for Kakao Link validation
+  const getNormalizedResultUrl = () => {
+    if (typeof window !== 'undefined') {
+      const search = window.location.search;
+      return `${PRODUCTION_DOMAIN}/result${search}`;
+    }
+    return resultUrl;
+  };
+
   // Initialize Kakao SDK Helper
   const initKakao = () => {
-    const kakaoKey = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
+    const kakaoKey = process.env.NEXT_PUBLIC_KAKAO_JS_KEY || '91f0317e2a9d5d066924b829dc5e8318';
     if (kakaoKey && typeof window !== 'undefined') {
       // @ts-expect-error Kakao SDK script
       if (window.Kakao && !window.Kakao.isInitialized()) {
@@ -42,13 +53,14 @@ export default function ShareButtons({
   }, []);
 
   const handleCopyLink = async () => {
+    const shareUrl = getNormalizedResultUrl();
     try {
-      await navigator.clipboard.writeText(resultUrl);
+      await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
       const textArea = document.createElement('textarea');
-      textArea.value = resultUrl;
+      textArea.value = shareUrl;
       document.body.appendChild(textArea);
       textArea.select();
       document.execCommand('copy');
@@ -59,8 +71,11 @@ export default function ShareButtons({
   };
 
   const handleKakaoShare = () => {
-    // JIT init retry
     initKakao();
+    const shareUrl = getNormalizedResultUrl();
+    const dynamicOgImage = `${PRODUCTION_DOMAIN}/api/og?trait=${primaryTraitId}&nickname=${encodeURIComponent(
+      nickname || ''
+    )}`;
 
     // @ts-expect-error Kakao SDK
     if (typeof window !== 'undefined' && window.Kakao && window.Kakao.isInitialized()) {
@@ -68,20 +83,22 @@ export default function ShareButtons({
       window.Kakao.Share.sendDefault({
         objectType: 'feed',
         content: {
-          title: `${nickname ? nickname + '님의 ' : ''}BDSM 성향은 [${trait.animal} : ${trait.nameKo}]!`,
+          title: `${nickname ? nickname + '님의 ' : ''}BDSM 성향은 [${trait.animal}]!`,
           description: `"${trait.title}" - 나와의 성향 궁합을 지금 바로 확인해보세요!`,
-          imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=80',
+          imageUrl: dynamicOgImage,
+          imageWidth: 800,
+          imageHeight: 600,
           link: {
-            mobileWebUrl: resultUrl,
-            webUrl: resultUrl
+            mobileWebUrl: shareUrl,
+            webUrl: shareUrl
           }
         },
         buttons: [
           {
-            title: '궁합 & 결과 확인하기',
+            title: '나와의 궁합 & 결과 확인하기',
             link: {
-              mobileWebUrl: resultUrl,
-              webUrl: resultUrl
+              mobileWebUrl: shareUrl,
+              webUrl: shareUrl
             }
           }
         ]
@@ -89,9 +106,9 @@ export default function ShareButtons({
     } else {
       if (navigator.share) {
         navigator.share({
-          title: `BDSM 성향 검사 결과: ${trait.animal}`,
+          title: `BDSM 동물 성향 검사 결과: ${trait.animal}`,
           text: `제 성향은 [${trait.animal} - ${trait.nameKo}]입니다. 나와의 궁합을 확인해보세요!`,
-          url: resultUrl
+          url: shareUrl
         }).catch(() => handleCopyLink());
       } else {
         handleCopyLink();
@@ -102,7 +119,6 @@ export default function ShareButtons({
   const handleCreateRoom = async () => {
     try {
       setIsCreatingRoom(true);
-      // Generate or retrieve persistent user ID
       let userId = '';
       if (typeof window !== 'undefined') {
         userId = localStorage.getItem('bdsm_user_id') || '';
