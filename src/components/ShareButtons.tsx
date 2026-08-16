@@ -32,13 +32,11 @@ export default function ShareButtons({
   const ensureKakaoInit = async (): Promise<boolean> => {
     if (typeof window === 'undefined') return false;
 
-    // 1. If Kakao already exists and initialized
     // @ts-expect-error Kakao SDK
     if (window.Kakao && window.Kakao.isInitialized && window.Kakao.isInitialized()) {
       return true;
     }
 
-    // 2. If Kakao exists but not initialized
     // @ts-expect-error Kakao SDK
     if (window.Kakao && window.Kakao.init) {
       try {
@@ -51,7 +49,6 @@ export default function ShareButtons({
       }
     }
 
-    // 3. If Kakao script not loaded yet, inject script dynamically
     return new Promise((resolve) => {
       const script = document.createElement('script');
       script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js';
@@ -78,7 +75,7 @@ export default function ShareButtons({
     ensureKakaoInit();
   }, []);
 
-  // Standard Link Copy: Copies exact current URL
+  // Standard Link Copy
   const handleCopyLink = async () => {
     const targetUrl =
       resultUrl || (typeof window !== 'undefined' ? window.location.href : '');
@@ -98,7 +95,7 @@ export default function ShareButtons({
     }
   };
 
-  // Kakao Share: Explicit Feed template execution
+  // Kakao Share: Strictly adhering to Kakao Feed template specifications
   const handleKakaoShare = async () => {
     const isReady = await ensureKakaoInit();
 
@@ -117,8 +114,8 @@ export default function ShareButtons({
         window.Kakao.Share.sendDefault({
           objectType: 'feed',
           content: {
-            title: `${nickname ? nickname + '님의 ' : ''}BDSM 성향은 [${trait.animal}]!`,
-            description: `"${trait.title}"\n나와의 꿀케미 궁합을 지금 확인해보세요!`,
+            title: `${nickname ? nickname + '님의 ' : ''}BDSM 성향: [${trait.animal}]`,
+            description: `${trait.title} - 나와의 성향 궁합을 확인해보세요!`,
             imageUrl: staticThumbnail,
             imageWidth: 640,
             imageHeight: 640,
@@ -129,7 +126,7 @@ export default function ShareButtons({
           },
           buttons: [
             {
-              title: '결과 & 궁합 확인하기 💖',
+              title: '결과 확인하기',
               link: {
                 mobileWebUrl: targetLink,
                 webUrl: targetLink
@@ -143,7 +140,6 @@ export default function ShareButtons({
       }
     }
 
-    // Fallback to clipboard if Kakao failed
     handleCopyLink();
   };
 

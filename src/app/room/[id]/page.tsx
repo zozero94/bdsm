@@ -150,7 +150,7 @@ export default function RoomPage() {
           },
           buttons: [
             {
-              title: '케미 룸 입장 & 궁합 보기 💖',
+              title: '케미 룸 입장하기',
               link: {
                 mobileWebUrl: roomUrl,
                 webUrl: roomUrl
