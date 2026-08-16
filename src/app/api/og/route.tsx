@@ -5,34 +5,59 @@ import { TraitId } from '@/types/test';
 
 export const runtime = 'edge';
 
+const BG_GRADIENTS: Record<TraitId, string> = {
+  dominant: 'linear-gradient(135deg, #3b0764 0%, #0f172a 100%)',
+  submissive: 'linear-gradient(135deg, #500724 0%, #0f172a 100%)',
+  sadist: 'linear-gradient(135deg, #4c0519 0%, #0f172a 100%)',
+  masochist: 'linear-gradient(135deg, #451a03 0%, #0f172a 100%)',
+  switch: 'linear-gradient(135deg, #022c22 0%, #0f172a 100%)',
+  master: 'linear-gradient(135deg, #422006 0%, #0f172a 100%)',
+  slave: 'linear-gradient(135deg, #083344 0%, #0f172a 100%)',
+  brat: 'linear-gradient(135deg, #431407 0%, #0f172a 100%)',
+  brat_tamer: 'linear-gradient(135deg, #292524 0%, #0f172a 100%)',
+  spanker: 'linear-gradient(135deg, #450a0a 0%, #0f172a 100%)',
+  hunter: 'linear-gradient(135deg, #064e3b 0%, #0f172a 100%)',
+  prey: 'linear-gradient(135deg, #134e4a 0%, #0f172a 100%)',
+  caregiver: 'linear-gradient(135deg, #451a03 0%, #0f172a 100%)',
+  little: 'linear-gradient(135deg, #422006 0%, #0f172a 100%)',
+  rigger: 'linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)',
+  rope_bottom: 'linear-gradient(135deg, #082f49 0%, #0f172a 100%)',
+  degrader: 'linear-gradient(135deg, #450a0a 0%, #0f172a 100%)',
+  degradee: 'linear-gradient(135deg, #451a03 0%, #0f172a 100%)'
+};
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const traitId = (searchParams.get('trait') || 'dominant') as TraitId;
-    const nickname = searchParams.get('nickname') || '';
+    const rawNickname = searchParams.get('nickname') || '';
+    const nickname = rawNickname.slice(0, 12); // Defend against layout breaking
 
     const trait = TRAITS[traitId] || TRAITS.dominant;
 
-    const bgGradients: Record<TraitId, string> = {
-      dominant: 'linear-gradient(135deg, #3b0764 0%, #0f172a 100%)',
-      submissive: 'linear-gradient(135deg, #500724 0%, #0f172a 100%)',
-      sadist: 'linear-gradient(135deg, #4c0519 0%, #0f172a 100%)',
-      masochist: 'linear-gradient(135deg, #451a03 0%, #0f172a 100%)',
-      switch: 'linear-gradient(135deg, #022c22 0%, #0f172a 100%)',
-      master: 'linear-gradient(135deg, #422006 0%, #0f172a 100%)',
-      slave: 'linear-gradient(135deg, #083344 0%, #0f172a 100%)',
-      brat: 'linear-gradient(135deg, #431407 0%, #0f172a 100%)',
-      brat_tamer: 'linear-gradient(135deg, #292524 0%, #0f172a 100%)',
-      spanker: 'linear-gradient(135deg, #450a0a 0%, #0f172a 100%)',
-      hunter: 'linear-gradient(135deg, #064e3b 0%, #0f172a 100%)',
-      prey: 'linear-gradient(135deg, #134e4a 0%, #0f172a 100%)',
-      caregiver: 'linear-gradient(135deg, #451a03 0%, #0f172a 100%)',
-      little: 'linear-gradient(135deg, #422006 0%, #0f172a 100%)',
-      rigger: 'linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)',
-      rope_bottom: 'linear-gradient(135deg, #082f49 0%, #0f172a 100%)',
-      degrader: 'linear-gradient(135deg, #450a0a 0%, #0f172a 100%)',
-      degradee: 'linear-gradient(135deg, #451a03 0%, #0f172a 100%)'
-    };
+    // Load Korean font (Pretendard Bold WOFF) for Satori Edge SVG engine
+    let fontData: ArrayBuffer | null = null;
+    try {
+      const fontRes = await fetch(
+        'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/packages/pretendard/dist/web/static/woff/Pretendard-Bold.woff'
+      );
+      if (fontRes.ok) {
+        fontData = await fontRes.arrayBuffer();
+      }
+    } catch (fontErr) {
+      console.warn('Font load fallback:', fontErr);
+    }
+
+    const fontsConfig = fontData
+      ? [
+          {
+            name: 'Pretendard',
+            data: fontData,
+            weight: 700 as const,
+            style: 'normal' as const
+          }
+        ]
+      : undefined;
 
     return new ImageResponse(
       (
@@ -44,9 +69,9 @@ export async function GET(req: NextRequest) {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            background: bgGradients[traitId] || bgGradients.dominant,
+            background: BG_GRADIENTS[traitId] || BG_GRADIENTS.dominant,
             padding: '40px',
-            fontFamily: 'sans-serif'
+            fontFamily: fontData ? 'Pretendard, sans-serif' : 'sans-serif'
           }}
         >
           {/* Header Tag */}
@@ -54,8 +79,8 @@ export async function GET(req: NextRequest) {
             style={{
               display: 'flex',
               alignItems: 'center',
-              background: 'rgba(255, 255, 255, 0.1)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
+              background: 'rgba(255, 255, 255, 0.12)',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
               borderRadius: '50px',
               padding: '8px 24px',
               marginBottom: '20px'
@@ -72,13 +97,13 @@ export async function GET(req: NextRequest) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: '130px',
-              height: '130px',
-              borderRadius: '65px',
-              background: 'rgba(15, 23, 42, 0.8)',
+              width: '120px',
+              height: '120px',
+              borderRadius: '60px',
+              background: 'rgba(15, 23, 42, 0.85)',
               border: '4px solid rgba(192, 132, 252, 0.6)',
-              fontSize: '70px',
-              marginBottom: '20px',
+              fontSize: '64px',
+              marginBottom: '16px',
               boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5)'
             }}
           >
@@ -87,17 +112,17 @@ export async function GET(req: NextRequest) {
 
           {/* Nickname & Title */}
           {nickname ? (
-            <div style={{ fontSize: '24px', color: '#cbd5e1', fontWeight: 600, marginBottom: '8px' }}>
+            <div style={{ fontSize: '22px', color: '#cbd5e1', fontWeight: 600, marginBottom: '6px' }}>
               {nickname}님의 성향은
             </div>
           ) : null}
 
           <div
             style={{
-              fontSize: '44px',
+              fontSize: '40px',
               fontWeight: 900,
               color: '#ffffff',
-              marginBottom: '12px',
+              marginBottom: '10px',
               textAlign: 'center',
               letterSpacing: '-1px'
             }}
@@ -107,11 +132,11 @@ export async function GET(req: NextRequest) {
 
           <div
             style={{
-              fontSize: '22px',
+              fontSize: '20px',
               fontWeight: 600,
               color: '#e9d5ff',
               textAlign: 'center',
-              maxWidth: '600px'
+              maxWidth: '620px'
             }}
           >
             &quot;{trait.title}&quot;
@@ -120,7 +145,7 @@ export async function GET(req: NextRequest) {
           {/* Footer Call to action */}
           <div
             style={{
-              marginTop: '30px',
+              marginTop: '28px',
               fontSize: '16px',
               color: '#94a3b8',
               display: 'flex',
@@ -133,7 +158,11 @@ export async function GET(req: NextRequest) {
       ),
       {
         width: 800,
-        height: 600
+        height: 600,
+        fonts: fontsConfig,
+        headers: {
+          'Cache-Control': 'public, max-age=86400, s-maxage=31536000, stale-while-revalidate=86400'
+        }
       }
     );
   } catch (e: any) {

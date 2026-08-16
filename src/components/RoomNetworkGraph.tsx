@@ -5,7 +5,7 @@ import { RoomData, RoomMember } from '@/types/test';
 import { TRAITS } from '@/data/traits';
 import { calculateChemistry } from '@/lib/calculate';
 import CharacterAvatar from './CharacterAvatar';
-import { Sparkles, Heart, Zap, Compass, Users } from 'lucide-react';
+import { Sparkles, Heart, Users } from 'lucide-react';
 
 interface RoomNetworkGraphProps {
   room: RoomData;
@@ -16,33 +16,37 @@ export default function RoomNetworkGraph({ room }: RoomNetworkGraphProps) {
 
   const members = room.members || [];
 
-  // useMemo로 O(N^2) 케미 조합 계산 메모이제이션
+  // useMemo: room.members 참조 안정성 보장 (실제 멤버 추가/변경 시에만 재연산)
   const chemistryPairs = useMemo(() => {
+    if (!room.members || room.members.length < 2) return [];
+
     const pairs: {
       memberA: RoomMember;
       memberB: RoomMember;
       chemistry: ReturnType<typeof calculateChemistry>;
     }[] = [];
 
-    for (let i = 0; i < members.length; i++) {
-      for (let j = i + 1; j < members.length; j++) {
-        const chem = calculateChemistry(members[i].primaryTrait, members[j].primaryTrait);
+    for (let i = 0; i < room.members.length; i++) {
+      for (let j = i + 1; j < room.members.length; j++) {
+        const chem = calculateChemistry(
+          room.members[i].primaryTrait,
+          room.members[j].primaryTrait
+        );
         pairs.push({
-          memberA: members[i],
-          memberB: members[j],
+          memberA: room.members[i],
+          memberB: room.members[j],
           chemistry: chem
         });
       }
     }
 
     return pairs.sort((a, b) => b.chemistry.score - a.chemistry.score);
-  }, [members]);
+  }, [room.members]);
 
-  // Selected pair chemistry memoization
-  const selectedChemistry = useMemo(() => {
-    if (!selectedPair) return null;
-    return calculateChemistry(selectedPair[0].primaryTrait, selectedPair[1].primaryTrait);
-  }, [selectedPair]);
+  // Selected pair chemistry: O(1) lightweight lookup inline calculation
+  const selectedChemistry = selectedPair
+    ? calculateChemistry(selectedPair[0].primaryTrait, selectedPair[1].primaryTrait)
+    : null;
 
   return (
     <div className="w-full flex flex-col gap-6">

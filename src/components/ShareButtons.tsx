@@ -14,7 +14,8 @@ interface ShareButtonsProps {
   scores: Record<TraitId, number>;
 }
 
-const PRODUCTION_DOMAIN = 'https://bdsm-tawny.vercel.app';
+const KAKAO_REGISTERED_DOMAIN =
+  process.env.NEXT_PUBLIC_SITE_URL || 'https://bdsm-tawny.vercel.app';
 
 export default function ShareButtons({
   primaryTraitId,
@@ -27,18 +28,10 @@ export default function ShareButtons({
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const trait = TRAITS[primaryTraitId] || TRAITS.dominant;
 
-  // Ensure sharing link always points to registered production domain for Kakao Link validation
-  const getNormalizedResultUrl = () => {
-    if (typeof window !== 'undefined') {
-      const search = window.location.search;
-      return `${PRODUCTION_DOMAIN}/result${search}`;
-    }
-    return resultUrl;
-  };
-
   // Initialize Kakao SDK Helper
   const initKakao = () => {
-    const kakaoKey = process.env.NEXT_PUBLIC_KAKAO_JS_KEY || '91f0317e2a9d5d066924b829dc5e8318';
+    const kakaoKey =
+      process.env.NEXT_PUBLIC_KAKAO_JS_KEY || '91f0317e2a9d5d066924b829dc5e8318';
     if (kakaoKey && typeof window !== 'undefined') {
       // @ts-expect-error Kakao SDK script
       if (window.Kakao && !window.Kakao.isInitialized()) {
@@ -52,15 +45,17 @@ export default function ShareButtons({
     initKakao();
   }, []);
 
+  // Standard Link Copy: Copies exact current URL (works seamlessly in localhost / preview / custom domain)
   const handleCopyLink = async () => {
-    const shareUrl = getNormalizedResultUrl();
+    const targetUrl =
+      resultUrl || (typeof window !== 'undefined' ? window.location.href : '');
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(targetUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
       const textArea = document.createElement('textarea');
-      textArea.value = shareUrl;
+      textArea.value = targetUrl;
       document.body.appendChild(textArea);
       textArea.select();
       document.execCommand('copy');
@@ -70,10 +65,17 @@ export default function ShareButtons({
     }
   };
 
+  // Kakao Share: Uses registered domain to satisfy Kakao Web URL whitelist security policy
   const handleKakaoShare = () => {
     initKakao();
-    const shareUrl = getNormalizedResultUrl();
-    const dynamicOgImage = `${PRODUCTION_DOMAIN}/api/og?trait=${primaryTraitId}&nickname=${encodeURIComponent(
+
+    let searchParamsStr = '';
+    if (typeof window !== 'undefined') {
+      searchParamsStr = window.location.search;
+    }
+
+    const kakaoTargetUrl = `${KAKAO_REGISTERED_DOMAIN}/result${searchParamsStr}`;
+    const dynamicOgImage = `${KAKAO_REGISTERED_DOMAIN}/api/og?trait=${primaryTraitId}&nickname=${encodeURIComponent(
       nickname || ''
     )}`;
 
@@ -89,27 +91,29 @@ export default function ShareButtons({
           imageWidth: 800,
           imageHeight: 600,
           link: {
-            mobileWebUrl: shareUrl,
-            webUrl: shareUrl
+            mobileWebUrl: kakaoTargetUrl,
+            webUrl: kakaoTargetUrl
           }
         },
         buttons: [
           {
             title: '나와의 궁합 & 결과 확인하기',
             link: {
-              mobileWebUrl: shareUrl,
-              webUrl: shareUrl
+              mobileWebUrl: kakaoTargetUrl,
+              webUrl: kakaoTargetUrl
             }
           }
         ]
       });
     } else {
       if (navigator.share) {
-        navigator.share({
-          title: `BDSM 동물 성향 검사 결과: ${trait.animal}`,
-          text: `제 성향은 [${trait.animal} - ${trait.nameKo}]입니다. 나와의 궁합을 확인해보세요!`,
-          url: shareUrl
-        }).catch(() => handleCopyLink());
+        navigator
+          .share({
+            title: `BDSM 동물 성향 검사 결과: ${trait.animal}`,
+            text: `제 성향은 [${trait.animal} - ${trait.nameKo}]입니다. 나와의 궁합을 확인해보세요!`,
+            url: kakaoTargetUrl
+          })
+          .catch(() => handleCopyLink());
       } else {
         handleCopyLink();
       }
@@ -123,7 +127,10 @@ export default function ShareButtons({
       if (typeof window !== 'undefined') {
         userId = localStorage.getItem('bdsm_user_id') || '';
         if (!userId) {
-          userId = 'u_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+          userId =
+            'u_' +
+            Math.random().toString(36).substring(2, 9) +
+            Date.now().toString(36);
           localStorage.setItem('bdsm_user_id', userId);
         }
       } else {
@@ -137,7 +144,10 @@ export default function ShareButtons({
         scores,
         createdAt: Date.now()
       };
-      const roomId = await createRoom(`${nickname || '친구들'}의 케미 맵`, hostMember);
+      const roomId = await createRoom(
+        `${nickname || '친구들'}의 케미 맵`,
+        hostMember
+      );
       router.push(`/room/${roomId}`);
     } catch (e) {
       console.error('Failed to create room', e);

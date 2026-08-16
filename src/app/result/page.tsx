@@ -32,10 +32,15 @@ function ResultContent() {
   const [resultData, setResultData] = useState<TestResultData | null>(null);
   const [isError, setIsError] = useState(false);
   const [currentUrl, setCurrentUrl] = useState('');
+  const [pendingRoomId, setPendingRoomId] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setCurrentUrl(window.location.href);
+      const savedRoomId = sessionStorage.getItem('bdsm_pending_room_id');
+      if (savedRoomId) {
+        setPendingRoomId(savedRoomId);
+      }
     }
 
     if (dataParam) {
@@ -115,6 +120,35 @@ function ResultContent() {
 
   return (
     <div className="w-full flex flex-col gap-6 items-center">
+      {/* Return to Invited Room CTA Banner (If invited via room link) */}
+      {pendingRoomId && (
+        <div className="w-full p-4 rounded-2xl bg-gradient-to-r from-emerald-900/70 via-teal-900/60 to-slate-900 border border-emerald-500/50 shadow-2xl flex items-center justify-between gap-3 animate-pulse">
+          <div className="flex items-center gap-2.5 text-left">
+            <span className="text-xl">🎉</span>
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-white">
+                초대받은 친구 케미 룸이 있습니다!
+              </span>
+              <span className="text-[11px] text-emerald-300">
+                지금 바로 돌아가서 내 성향 캐릭터를 등록하세요.
+              </span>
+            </div>
+          </div>
+          <Link
+            href={`/room/${pendingRoomId}`}
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                sessionStorage.removeItem('bdsm_pending_room_id');
+              }
+            }}
+            className="flex-shrink-0 py-2 px-3.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-xs shadow-lg transition-transform active:scale-95 flex items-center gap-1"
+          >
+            <span>방으로 가기</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      )}
+
       {/* Top Ad Banner */}
       <AdBanner slot="result_top_banner" />
 

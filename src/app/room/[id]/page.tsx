@@ -184,7 +184,12 @@ export default function RoomPage() {
           </div>
           <Link
             href="/test"
-            className="py-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow flex items-center gap-1"
+            onClick={() => {
+              if (typeof window !== 'undefined' && roomId) {
+                sessionStorage.setItem('bdsm_pending_room_id', roomId);
+              }
+            }}
+            className="py-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow flex items-center gap-1 transition-transform active:scale-95"
           >
             <span>검사하기</span>
             <ArrowRight className="w-3 h-3" />
