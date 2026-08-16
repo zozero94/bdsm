@@ -11,6 +11,7 @@ import AdBanner from '@/components/AdBanner';
 import { Users, Copy, Check, Sparkles, ArrowRight, UserPlus, MessageCircle } from 'lucide-react';
 
 const PRODUCTION_DOMAIN = 'https://bdsm-tawny.vercel.app';
+const KAKAO_JS_KEY = '91f0317e2a9d5d066924b829dc5e8318';
 
 export default function RoomPage() {
   const params = useParams();
@@ -21,21 +22,51 @@ export default function RoomPage() {
   const [copied, setCopied] = useState(false);
   const [currentMember, setCurrentMember] = useState<RoomMember | null>(null);
 
-  // Initialize Kakao SDK
-  const initKakao = () => {
-    const kakaoKey =
-      process.env.NEXT_PUBLIC_KAKAO_JS_KEY || '91f0317e2a9d5d066924b829dc5e8318';
-    if (kakaoKey && typeof window !== 'undefined') {
-      // @ts-expect-error Kakao SDK script
-      if (window.Kakao && !window.Kakao.isInitialized()) {
-        // @ts-expect-error Kakao SDK script
-        window.Kakao.init(kakaoKey);
+  // Ensure Kakao SDK is initialized
+  const ensureKakaoInit = async (): Promise<boolean> => {
+    if (typeof window === 'undefined') return false;
+
+    // @ts-expect-error Kakao SDK
+    if (window.Kakao && window.Kakao.isInitialized && window.Kakao.isInitialized()) {
+      return true;
+    }
+
+    // @ts-expect-error Kakao SDK
+    if (window.Kakao && window.Kakao.init) {
+      try {
+        // @ts-expect-error Kakao SDK
+        window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || KAKAO_JS_KEY);
+        // @ts-expect-error Kakao SDK
+        return window.Kakao.isInitialized();
+      } catch (e) {
+        console.error('Kakao init error', e);
       }
     }
+
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js';
+      script.async = true;
+      script.onload = () => {
+        try {
+          // @ts-expect-error Kakao SDK
+          if (window.Kakao && !window.Kakao.isInitialized()) {
+            // @ts-expect-error Kakao SDK
+            window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || KAKAO_JS_KEY);
+          }
+          // @ts-expect-error Kakao SDK
+          resolve(window.Kakao && window.Kakao.isInitialized());
+        } catch {
+          resolve(false);
+        }
+      };
+      script.onerror = () => resolve(false);
+      document.head.appendChild(script);
+    });
   };
 
   useEffect(() => {
-    initKakao();
+    ensureKakaoInit();
   }, []);
 
   // Load current user member info from storage if available
@@ -94,55 +125,46 @@ export default function RoomPage() {
     }
   };
 
-  const handleKakaoShareRoom = () => {
-    initKakao();
+  const handleKakaoShareRoom = async () => {
+    const isReady = await ensureKakaoInit();
     const roomUrl = `${PRODUCTION_DOMAIN}/room/${roomId}`;
     const roomTitle = room?.name || '우리 모임 케미 맵';
     const memberCount = room?.members?.length || 1;
 
     // @ts-expect-error Kakao SDK
-    if (typeof window !== 'undefined' && window.Kakao && window.Kakao.isInitialized()) {
-      // @ts-expect-error Kakao SDK
-      window.Kakao.Share.sendDefault({
-        objectType: 'feed',
-        content: {
-          title: `[${roomTitle}] 실시간 케미 룸에 초대합니다! 🎉`,
-          description: `현재 ${memberCount}명이 참여 중! 친구들과의 성향 궁합 지도를 확인하고 내 캐릭터도 등록해보세요.`,
-          imageUrl: `${PRODUCTION_DOMAIN}/app-icon.png`,
-          imageWidth: 800,
-          imageHeight: 600,
-          link: {
-            mobileWebUrl: roomUrl,
-            webUrl: roomUrl
-          }
-        },
-        itemContent: {
-          profileText: 'BDSM 동물 성향 연구소',
-          profileImageUrl: `${PRODUCTION_DOMAIN}/app-icon.png`
-        },
-        buttons: [
-          {
-            title: '케미 룸 입장 & 궁합 보기 💖',
+    if (isReady && window.Kakao && window.Kakao.Share) {
+      try {
+        // @ts-expect-error Kakao SDK
+        window.Kakao.Share.sendDefault({
+          objectType: 'feed',
+          content: {
+            title: `[${roomTitle}] 케미 룸 초대! 🎉`,
+            description: `현재 ${memberCount}명이 모여있어요! 우리 모임의 궁합 지도를 확인하고 내 캐릭터도 등록해보세요.`,
+            imageUrl: `${PRODUCTION_DOMAIN}/app-icon.png`,
+            imageWidth: 640,
+            imageHeight: 640,
             link: {
               mobileWebUrl: roomUrl,
               webUrl: roomUrl
             }
-          }
-        ]
-      });
-    } else {
-      if (navigator.share) {
-        navigator
-          .share({
-            title: `[${roomTitle}] 케미 룸 초대`,
-            text: `친구들과의 실시간 궁합 관계도를 확인해 보세요!`,
-            url: roomUrl
-          })
-          .catch(() => handleCopyRoomLink());
-      } else {
-        handleCopyRoomLink();
+          },
+          buttons: [
+            {
+              title: '케미 룸 입장 & 궁합 보기 💖',
+              link: {
+                mobileWebUrl: roomUrl,
+                webUrl: roomUrl
+              }
+            }
+          ]
+        });
+        return;
+      } catch (err) {
+        console.error('Failed to send Kakao room share', err);
       }
     }
+
+    handleCopyRoomLink();
   };
 
   const handleJoinMyResult = async () => {

@@ -15,6 +15,7 @@ interface ShareButtonsProps {
 }
 
 const PRODUCTION_DOMAIN = 'https://bdsm-tawny.vercel.app';
+const KAKAO_JS_KEY = '91f0317e2a9d5d066924b829dc5e8318';
 
 export default function ShareButtons({
   primaryTraitId,
@@ -27,21 +28,54 @@ export default function ShareButtons({
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const trait = TRAITS[primaryTraitId] || TRAITS.dominant;
 
-  // Initialize Kakao SDK Helper
-  const initKakao = () => {
-    const kakaoKey =
-      process.env.NEXT_PUBLIC_KAKAO_JS_KEY || '91f0317e2a9d5d066924b829dc5e8318';
-    if (kakaoKey && typeof window !== 'undefined') {
-      // @ts-expect-error Kakao SDK script
-      if (window.Kakao && !window.Kakao.isInitialized()) {
-        // @ts-expect-error Kakao SDK script
-        window.Kakao.init(kakaoKey);
+  // Ensure Kakao SDK is fully loaded and initialized
+  const ensureKakaoInit = async (): Promise<boolean> => {
+    if (typeof window === 'undefined') return false;
+
+    // 1. If Kakao already exists and initialized
+    // @ts-expect-error Kakao SDK
+    if (window.Kakao && window.Kakao.isInitialized && window.Kakao.isInitialized()) {
+      return true;
+    }
+
+    // 2. If Kakao exists but not initialized
+    // @ts-expect-error Kakao SDK
+    if (window.Kakao && window.Kakao.init) {
+      try {
+        // @ts-expect-error Kakao SDK
+        window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || KAKAO_JS_KEY);
+        // @ts-expect-error Kakao SDK
+        return window.Kakao.isInitialized();
+      } catch (e) {
+        console.error('Kakao init error', e);
       }
     }
+
+    // 3. If Kakao script not loaded yet, inject script dynamically
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js';
+      script.async = true;
+      script.onload = () => {
+        try {
+          // @ts-expect-error Kakao SDK
+          if (window.Kakao && !window.Kakao.isInitialized()) {
+            // @ts-expect-error Kakao SDK
+            window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY || KAKAO_JS_KEY);
+          }
+          // @ts-expect-error Kakao SDK
+          resolve(window.Kakao && window.Kakao.isInitialized());
+        } catch {
+          resolve(false);
+        }
+      };
+      script.onerror = () => resolve(false);
+      document.head.appendChild(script);
+    });
   };
 
   useEffect(() => {
-    initKakao();
+    ensureKakaoInit();
   }, []);
 
   // Standard Link Copy: Copies exact current URL
@@ -64,9 +98,9 @@ export default function ShareButtons({
     }
   };
 
-  // Kakao Share: Standard Feed Template
-  const handleKakaoShare = () => {
-    initKakao();
+  // Kakao Share: Explicit Feed template execution
+  const handleKakaoShare = async () => {
+    const isReady = await ensureKakaoInit();
 
     let targetLink = `${PRODUCTION_DOMAIN}/result`;
     if (typeof window !== 'undefined') {
@@ -74,49 +108,43 @@ export default function ShareButtons({
       targetLink = `${PRODUCTION_DOMAIN}/result${search}`;
     }
 
-    const dynamicOgImage = `${PRODUCTION_DOMAIN}/api/og?trait=${primaryTraitId}&nickname=${encodeURIComponent(
-      nickname || ''
-    )}`;
+    const staticThumbnail = `${PRODUCTION_DOMAIN}/app-icon.png`;
 
     // @ts-expect-error Kakao SDK
-    if (typeof window !== 'undefined' && window.Kakao && window.Kakao.isInitialized()) {
-      // @ts-expect-error Kakao SDK
-      window.Kakao.Share.sendDefault({
-        objectType: 'feed',
-        content: {
-          title: `${nickname ? nickname + '님의 ' : ''}BDSM 성향은 [${trait.animal}]!`,
-          description: `"${trait.title}" - 나와의 성향 궁합을 지금 바로 확인해보세요!`,
-          imageUrl: dynamicOgImage,
-          imageWidth: 800,
-          imageHeight: 600,
-          link: {
-            mobileWebUrl: targetLink,
-            webUrl: targetLink
-          }
-        },
-        buttons: [
-          {
-            title: '결과 & 궁합 확인하기 💖',
+    if (isReady && window.Kakao && window.Kakao.Share) {
+      try {
+        // @ts-expect-error Kakao SDK
+        window.Kakao.Share.sendDefault({
+          objectType: 'feed',
+          content: {
+            title: `${nickname ? nickname + '님의 ' : ''}BDSM 성향은 [${trait.animal}]!`,
+            description: `"${trait.title}"\n나와의 꿀케미 궁합을 지금 확인해보세요!`,
+            imageUrl: staticThumbnail,
+            imageWidth: 640,
+            imageHeight: 640,
             link: {
               mobileWebUrl: targetLink,
               webUrl: targetLink
             }
-          }
-        ]
-      });
-    } else {
-      if (navigator.share) {
-        navigator
-          .share({
-            title: `BDSM 동물 성향 검사 결과: ${trait.animal}`,
-            text: `제 성향은 [${trait.animal} - ${trait.nameKo}]입니다. 나와의 궁합을 확인해보세요!`,
-            url: targetLink
-          })
-          .catch(() => handleCopyLink());
-      } else {
-        handleCopyLink();
+          },
+          buttons: [
+            {
+              title: '결과 & 궁합 확인하기 💖',
+              link: {
+                mobileWebUrl: targetLink,
+                webUrl: targetLink
+              }
+            }
+          ]
+        });
+        return;
+      } catch (err) {
+        console.error('Failed to send Kakao message', err);
       }
     }
+
+    // Fallback to clipboard if Kakao failed
+    handleCopyLink();
   };
 
   const handleCreateRoom = async () => {
