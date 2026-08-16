@@ -4,35 +4,27 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Sparkles, Heart } from 'lucide-react';
 
-const RANDOM_NICKNAMES = [
-  '호기심많은 고양이',
-  '용감한 흑표범',
-  '포근한 햄스터',
-  '매혹적인 여우',
-  '자유로운 카멜레온',
-  '따스한 아빠곰'
-];
-
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
 
   const handleQuickTestClick = (e: React.MouseEvent) => {
-    if (pathname === '/') {
+    // Check if nickname exists
+    let nickname = '';
+    if (typeof window !== 'undefined') {
+      nickname = localStorage.getItem('bdsm_nickname') || '';
+    }
+
+    if (!nickname.trim()) {
       e.preventDefault();
-      const inputEl = document.getElementById('nickname');
-      if (inputEl) {
-        inputEl.focus();
-        inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    } else {
-      // If nickname is not set, set a random cute one
-      if (typeof window !== 'undefined') {
-        const saved = localStorage.getItem('bdsm_nickname');
-        if (!saved) {
-          const rand = RANDOM_NICKNAMES[Math.floor(Math.random() * RANDOM_NICKNAMES.length)];
-          localStorage.setItem('bdsm_nickname', rand);
+      if (pathname === '/') {
+        const inputEl = document.getElementById('nickname');
+        if (inputEl) {
+          inputEl.focus();
+          inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
+      } else {
+        router.push('/');
       }
     }
   };

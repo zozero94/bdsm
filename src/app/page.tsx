@@ -1,36 +1,44 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { TRAITS } from '@/data/traits';
 import { TraitId, TraitInfo } from '@/types/test';
 import CharacterAvatar from '@/components/CharacterAvatar';
 import TraitModal from '@/components/TraitModal';
 import AdBanner from '@/components/AdBanner';
-import { Sparkles, ArrowRight, ShieldCheck, HeartHandshake, Flame, BookOpen } from 'lucide-react';
-
-const RANDOM_NICKNAMES = [
-  '호기심많은 고양이',
-  '용감한 흑표범',
-  '포근한 햄스터',
-  '매혹적인 여우',
-  '자유로운 카멜레온',
-  '따스한 아빠곰',
-  '귀여운 라쿤',
-  '달빛 아래 늑대'
-];
+import { Sparkles, ArrowRight, ShieldCheck, HeartHandshake, Flame, BookOpen, AlertCircle } from 'lucide-react';
 
 export default function HomePage() {
   const router = useRouter();
   const [nickname, setNickname] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isShaking, setIsShaking] = useState(false);
   const [selectedTrait, setSelectedTrait] = useState<TraitInfo | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleStartTest = (e: React.FormEvent) => {
     e.preventDefault();
-    const finalNickname =
-      nickname.trim() ||
-      RANDOM_NICKNAMES[Math.floor(Math.random() * RANDOM_NICKNAMES.length)];
-    localStorage.setItem('bdsm_nickname', finalNickname);
+    const trimmed = nickname.trim();
+
+    if (!trimmed) {
+      setErrorMessage('테스트에 사용할 닉네임을 입력해 주세요!');
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 500);
+      inputRef.current?.focus();
+      return;
+    }
+
+    if (trimmed.length < 2) {
+      setErrorMessage('닉네임은 최소 2글자 이상 입력해 주세요.');
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 500);
+      inputRef.current?.focus();
+      return;
+    }
+
+    setErrorMessage('');
+    localStorage.setItem('bdsm_nickname', trimmed);
     router.push('/test');
   };
 
@@ -79,30 +87,45 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Start Form */}
+        {/* Start Form (Mandatory Nickname) */}
         <form
           onSubmit={handleStartTest}
-          className="w-full max-w-sm flex flex-col gap-3.5 p-5 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl backdrop-blur-md"
+          className={`w-full max-w-sm flex flex-col gap-3.5 p-5 rounded-3xl bg-slate-900/90 border shadow-2xl backdrop-blur-md transition-all ${
+            errorMessage ? 'border-rose-500/80 shadow-rose-950/40' : 'border-slate-800'
+          } ${isShaking ? 'animate-bounce' : ''}`}
         >
           <div className="flex flex-col text-left">
             <label
               htmlFor="nickname"
               className="text-xs font-bold text-slate-200 mb-1.5 flex items-center justify-between"
             >
-              <span>테스트에 사용할 닉네임 입력</span>
-              <span className="text-[10px] text-purple-400 font-medium">
-                미입력 시 귀여운 랜덤 닉네임 자동 생성
-              </span>
+              <span>테스트에 사용할 닉네임</span>
+              <span className="text-[11px] text-rose-400 font-semibold">* 필수 입력</span>
             </label>
             <input
+              ref={inputRef}
               id="nickname"
               type="text"
-              placeholder="예: 냥이, 카리스마표범, 탐험가"
+              required
+              placeholder="닉네임을 2~10자 이내로 입력하세요"
               value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
+              onChange={(e) => {
+                setNickname(e.target.value);
+                if (errorMessage) setErrorMessage('');
+              }}
               maxLength={10}
-              className="w-full px-4 py-3 rounded-2xl bg-slate-950 border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-purple-500 transition-colors"
+              className={`w-full px-4 py-3 rounded-2xl bg-slate-950 border text-white placeholder-slate-500 text-sm focus:outline-none transition-colors ${
+                errorMessage
+                  ? 'border-rose-500 focus:border-rose-400'
+                  : 'border-slate-700/80 focus:border-purple-500'
+              }`}
             />
+            {errorMessage && (
+              <div className="flex items-center gap-1 text-xs text-rose-400 mt-1.5 animate-in fade-in">
+                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
           </div>
 
           <button
