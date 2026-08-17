@@ -21,6 +21,7 @@ export default function RoomPage() {
   const [room, setRoom] = useState<RoomData | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [currentMember, setCurrentMember] = useState<RoomMember | null>(null);
 
@@ -28,6 +29,11 @@ export default function RoomPage() {
   useEffect(() => {
     initKakaoSync();
   }, []);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 2500);
+  };
 
   // Load current user member info from storage if available
   useEffect(() => {
@@ -77,28 +83,53 @@ export default function RoomPage() {
     const success = await copyToClipboard(url);
     if (success) {
       setCopied(true);
+      showToast('초대 링크가 클립보드에 복사되었습니다! 🔗');
       setTimeout(() => setCopied(false), 2500);
     }
   };
 
-  const handleKakaoShareRoom = () => {
+  const handleKakaoShareRoom = async () => {
     const roomUrl = `${PRODUCTION_DOMAIN}/room/${roomId}`;
     const roomTitle = room?.name || '우리 모임 케미 맵';
     const memberCount = room?.members?.length || 1;
+    const shareTitle = `[${roomTitle}] 실시간 BDSM 케미 룸 초대! 🎉`;
+    const shareDesc = `현재 ${memberCount}명이 모여있어요! 우리 모임의 궁합 지도를 확인해보세요.`;
+    const staticThumbnail = `${PRODUCTION_DOMAIN}/app-icon.png`;
 
-    loadKakaoSDK(() => {
-      const success = shareKakaoFeed({
-        title: `[${roomTitle}] 실시간 BDSM 케미 룸 초대! 🎉`,
-        description: `현재 ${memberCount}명이 모여있어요! 우리 모임의 궁합 지도를 확인해보세요.`,
-        imageUrl: `${PRODUCTION_DOMAIN}/app-icon.png`,
-        targetUrl: roomUrl,
-        buttonTitle: '같이 결과 보기'
+    // 1. Try Kakao JS SDK Feed Share
+    let kakaoSent = false;
+    try {
+      loadKakaoSDK(() => {
+        kakaoSent = shareKakaoFeed({
+          title: shareTitle,
+          description: shareDesc,
+          imageUrl: staticThumbnail,
+          targetUrl: roomUrl,
+          buttonTitle: '같이 결과 보기'
+        });
       });
+    } catch {
+      kakaoSent = false;
+    }
 
-      if (!success) {
-        handleCopyRoomLink();
+    // 2. If In-App Browser blocks custom scheme (Error 4002), fallback to Native Web Share
+    if (!kakaoSent && typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareDesc,
+          url: roomUrl
+        });
+        return;
+      } catch (err: any) {
+        if (err.name === 'AbortError') return;
       }
-    });
+    }
+
+    // 3. Final Fallback: Copy Link
+    if (!kakaoSent) {
+      handleCopyRoomLink();
+    }
   };
 
   const handleJoinMyResult = async () => {
@@ -148,7 +179,15 @@ export default function RoomPage() {
     room.members.some((m) => m.id === currentMember.id);
 
   return (
-    <div className="w-full flex flex-col gap-6 items-center">
+    <div className="w-full flex flex-col gap-6 items-center relative">
+      {/* Toast Popup */}
+      {toastMessage && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-slate-900/95 border border-purple-500/50 text-white text-xs font-bold shadow-2xl backdrop-blur-md animate-fade-in flex items-center gap-2">
+          <Check className="w-4 h-4 text-emerald-400" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Top Ad Banner */}
       <AdBanner slot="room_top_banner" />
 

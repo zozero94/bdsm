@@ -26,6 +26,7 @@ export default function ShareButtons({
 }: ShareButtonsProps) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const trait = TRAITS[primaryTraitId] || TRAITS.dominant;
 
@@ -33,6 +34,11 @@ export default function ShareButtons({
   useEffect(() => {
     initKakaoSync();
   }, []);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 2500);
+  };
 
   // Standard Link Copy
   const handleCopyLink = async () => {
@@ -42,29 +48,53 @@ export default function ShareButtons({
     const success = await copyToClipboard(targetUrl);
     if (success) {
       setCopied(true);
+      showToast('링크가 클립보드에 복사되었습니다! 🎉');
       setTimeout(() => setCopied(false), 2500);
     }
   };
 
-  // Kakao Share using verified pipeline with resultUrl prioritization
-  const handleKakaoShare = () => {
+  // 3-Tier Robust Sharing: Kakao Share -> Native Web Share API -> Clipboard Copy
+  const handleKakaoShare = async () => {
     const targetLink =
       resultUrl || (typeof window !== 'undefined' ? window.location.href : `${PRODUCTION_DOMAIN}/result`);
+    const shareTitle = `${nickname ? nickname + '님의 ' : ''}BDSM 성향: [${trait.animal}]`;
+    const shareDesc = `"${trait.title}" - 나와의 성향 궁합을 확인해보세요!`;
     const staticThumbnail = `${PRODUCTION_DOMAIN}/app-icon.png`;
 
-    loadKakaoSDK(() => {
-      const success = shareKakaoFeed({
-        title: `${nickname ? nickname + '님의 ' : ''}BDSM 성향: [${trait.animal}]`,
-        description: `"${trait.title}" - 나와의 성향 궁합을 확인해보세요!`,
-        imageUrl: staticThumbnail,
-        targetUrl: targetLink,
-        buttonTitle: '나는 어떤 성향일까?'
+    // 1. Try Kakao JS SDK Feed Share
+    let kakaoSent = false;
+    try {
+      loadKakaoSDK(() => {
+        kakaoSent = shareKakaoFeed({
+          title: shareTitle,
+          description: shareDesc,
+          imageUrl: staticThumbnail,
+          targetUrl: targetLink,
+          buttonTitle: '나는 어떤 성향일까?'
+        });
       });
+    } catch {
+      kakaoSent = false;
+    }
 
-      if (!success) {
-        handleCopyLink();
+    // 2. If In-App Browser blocks custom scheme (Error 4002), fallback to Native Web Share
+    if (!kakaoSent && typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareDesc,
+          url: targetLink
+        });
+        return;
+      } catch (err: any) {
+        if (err.name === 'AbortError') return; // User cancelled share
       }
-    });
+    }
+
+    // 3. Final Fallback: Copy Link
+    if (!kakaoSent) {
+      handleCopyLink();
+    }
   };
 
   const handleCreateRoom = async () => {
@@ -105,7 +135,15 @@ export default function ShareButtons({
   };
 
   return (
-    <div className="w-full flex flex-col gap-3">
+    <div className="w-full flex flex-col gap-3 relative">
+      {/* Toast Popup */}
+      {toastMessage && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-slate-900/95 border border-purple-500/50 text-white text-xs font-bold shadow-2xl backdrop-blur-md animate-fade-in flex items-center gap-2">
+          <Check className="w-4 h-4 text-emerald-400" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Primary Actions Grid */}
       <div className="grid grid-cols-2 gap-2.5">
         {/* Kakao Share */}
