@@ -64,7 +64,7 @@ export function loadKakaoSDK(callback: () => void) {
 export interface SendKakaoFeedParams {
   title: string;
   description: string;
-  imageUrl: string;
+  imageUrl?: string;
   targetUrl: string;
   buttonTitle: string;
 }
@@ -94,15 +94,19 @@ export function shareKakaoFeed({
     }
   }
 
+  // Ensure robust absolute HTTPS static image (Kakao scraper requires instant response)
+  const finalImageUrl =
+    imageUrl || 'https://bdsm-zero.vercel.app/app-icon.png';
+
   try {
     kakao.Share.sendDefault({
       objectType: 'feed',
       content: {
         title,
         description,
-        imageUrl,
+        imageUrl: finalImageUrl,
         imageWidth: 800,
-        imageHeight: 600,
+        imageHeight: 800,
         link: {
           mobileWebUrl: targetUrl,
           webUrl: targetUrl

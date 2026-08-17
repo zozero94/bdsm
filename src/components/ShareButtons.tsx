@@ -48,7 +48,7 @@ export default function ShareButtons({
     }
   };
 
-  // Kakao Share using wedding-invitation callback pipeline
+  // Kakao Share using verified wedding-invitation pipeline
   const handleKakaoShare = () => {
     let targetLink = `${PRODUCTION_DOMAIN}/result`;
     if (typeof window !== 'undefined') {
@@ -56,21 +56,18 @@ export default function ShareButtons({
       targetLink = `${PRODUCTION_DOMAIN}/result${search}`;
     }
 
-    const dynamicOgImage = `${PRODUCTION_DOMAIN}/api/og?trait=${primaryTraitId}&nickname=${encodeURIComponent(
-      nickname || ''
-    )}`;
+    const staticThumbnail = `${PRODUCTION_DOMAIN}/app-icon.png`;
 
     loadKakaoSDK(() => {
       const success = shareKakaoFeed({
         title: `${nickname ? nickname + '님의 ' : ''}BDSM 성향: [${trait.animal}]`,
         description: `"${trait.title}" - 나와의 성향 궁합을 확인해보세요!`,
-        imageUrl: dynamicOgImage,
+        imageUrl: staticThumbnail,
         targetUrl: targetLink,
         buttonTitle: '나는 어떤 성향일까?'
       });
 
       if (!success) {
-        // Fallback to clipboard copy
         handleCopyLink();
       }
     });
