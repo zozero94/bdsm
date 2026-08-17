@@ -72,7 +72,7 @@ export default function ShareButtons({
     }
   };
 
-  // Direct Kakao Share with clean URL format & dynamic animal card
+  // Direct Kakao Share with clean URL format & dynamic 800x800 bitmap card
   const handleKakaoShare = () => {
     const targetLink = getCleanResultUrl();
     const shareTitle = `${nickname ? nickname + '님의 ' : ''}BDSM 성향: [${trait.animal}]`;

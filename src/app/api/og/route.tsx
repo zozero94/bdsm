@@ -3,27 +3,27 @@ import { NextRequest } from 'next/server';
 import { TRAITS } from '@/data/traits';
 import { TraitId } from '@/types/test';
 
-export const runtime = 'nodejs';
+export const runtime = 'edge';
 
-const BG_GRADIENTS: Record<TraitId, string> = {
-  dominant: 'linear-gradient(135deg, #3b0764 0%, #0f172a 100%)',
-  submissive: 'linear-gradient(135deg, #500724 0%, #0f172a 100%)',
-  sadist: 'linear-gradient(135deg, #4c0519 0%, #0f172a 100%)',
-  masochist: 'linear-gradient(135deg, #451a03 0%, #0f172a 100%)',
-  hunter: 'linear-gradient(135deg, #064e3b 0%, #0f172a 100%)',
-  prey: 'linear-gradient(135deg, #134e4a 0%, #0f172a 100%)',
-  caregiver: 'linear-gradient(135deg, #451a03 0%, #0f172a 100%)',
-  little: 'linear-gradient(135deg, #422006 0%, #0f172a 100%)',
-  rigger: 'linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)',
-  rope_bottom: 'linear-gradient(135deg, #082f49 0%, #0f172a 100%)',
-  degrader: 'linear-gradient(135deg, #3f0c10 0%, #0f172a 100%)',
-  degradee: 'linear-gradient(135deg, #172554 0%, #0f172a 100%)',
-  switch: 'linear-gradient(135deg, #064e3b 0%, #0f172a 100%)',
-  master: 'linear-gradient(135deg, #422006 0%, #0f172a 100%)',
-  slave: 'linear-gradient(135deg, #083344 0%, #0f172a 100%)',
-  brat: 'linear-gradient(135deg, #431407 0%, #0f172a 100%)',
-  brat_tamer: 'linear-gradient(135deg, #292524 0%, #0f172a 100%)',
-  spanker: 'linear-gradient(135deg, #450a0a 0%, #0f172a 100%)'
+const BG_CONFIG: Record<TraitId, { bg1: string; bg2: string; accent: string }> = {
+  dominant: { bg1: '#3b0764', bg2: '#0f172a', accent: '#c084fc' },
+  submissive: { bg1: '#500724', bg2: '#0f172a', accent: '#f472b6' },
+  sadist: { bg1: '#4c0519', bg2: '#0f172a', accent: '#fb7185' },
+  masochist: { bg1: '#451a03', bg2: '#0f172a', accent: '#fb923c' },
+  hunter: { bg1: '#064e3b', bg2: '#0f172a', accent: '#34d399' },
+  prey: { bg1: '#134e4a', bg2: '#0f172a', accent: '#2dd4bf' },
+  caregiver: { bg1: '#451a03', bg2: '#0f172a', accent: '#f59e0b' },
+  little: { bg1: '#4a044e', bg2: '#0f172a', accent: '#f472b6' },
+  rigger: { bg1: '#1e1b4b', bg2: '#0f172a', accent: '#818cf8' },
+  rope_bottom: { bg1: '#082f49', bg2: '#0f172a', accent: '#38bdf8' },
+  degrader: { bg1: '#3f0c10', bg2: '#0f172a', accent: '#f87171' },
+  degradee: { bg1: '#172554', bg2: '#0f172a', accent: '#60a5fa' },
+  switch: { bg1: '#064e3b', bg2: '#0f172a', accent: '#4ade80' },
+  master: { bg1: '#422006', bg2: '#0f172a', accent: '#fbbf24' },
+  slave: { bg1: '#083344', bg2: '#0f172a', accent: '#22d3ee' },
+  brat: { bg1: '#431407', bg2: '#0f172a', accent: '#fb923c' },
+  brat_tamer: { bg1: '#292524', bg2: '#0f172a', accent: '#a8a29e' },
+  spanker: { bg1: '#450a0a', bg2: '#0f172a', accent: '#ef4444' }
 };
 
 export async function GET(req: NextRequest) {
@@ -34,30 +34,7 @@ export async function GET(req: NextRequest) {
     const nickname = rawNickname.slice(0, 10);
 
     const trait = TRAITS[traitId] || TRAITS.dominant;
-
-    // Load Korean font (Pretendard Bold WOFF)
-    let fontData: ArrayBuffer | null = null;
-    try {
-      const fontRes = await fetch(
-        'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/packages/pretendard/dist/web/static/woff/Pretendard-Bold.woff'
-      );
-      if (fontRes.ok) {
-        fontData = await fontRes.arrayBuffer();
-      }
-    } catch (fontErr) {
-      console.warn('Font load fallback:', fontErr);
-    }
-
-    const fontsConfig = fontData
-      ? [
-          {
-            name: 'Pretendard',
-            data: fontData,
-            weight: 700 as const,
-            style: 'normal' as const
-          }
-        ]
-      : undefined;
+    const config = BG_CONFIG[traitId] || BG_CONFIG.dominant;
 
     return new ImageResponse(
       (
@@ -69,25 +46,40 @@ export async function GET(req: NextRequest) {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            background: BG_GRADIENTS[traitId] || BG_GRADIENTS.dominant,
+            background: `linear-gradient(135deg, ${config.bg1} 0%, ${config.bg2} 100%)`,
             padding: '40px',
-            fontFamily: fontData ? 'Pretendard, sans-serif' : 'sans-serif'
+            fontFamily: 'sans-serif'
           }}
         >
+          {/* Card Border */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '20px',
+              left: '20px',
+              right: '20px',
+              bottom: '20px',
+              borderRadius: '32px',
+              border: `2px solid ${config.accent}`,
+              opacity: 0.35,
+              display: 'flex'
+            }}
+          />
+
           {/* Top Pill */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              background: 'rgba(255, 255, 255, 0.12)',
-              border: '1px solid rgba(255, 255, 255, 0.25)',
+              background: 'rgba(15, 23, 42, 0.85)',
+              border: `1.5px solid ${config.accent}`,
               borderRadius: '50px',
-              padding: '8px 24px',
-              marginBottom: '16px'
+              padding: '10px 28px',
+              marginBottom: '24px'
             }}
           >
-            <span style={{ fontSize: '20px', color: '#c084fc', fontWeight: 'bold' }}>
-              🐾 BDSM 동물 성향 테스트 결과
+            <span style={{ fontSize: '22px', color: config.accent, fontWeight: 'bold' }}>
+              🐾 BDSM 동물 성향 테스트
             </span>
           </div>
 
@@ -97,14 +89,14 @@ export async function GET(req: NextRequest) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: '130px',
-              height: '130px',
-              borderRadius: '65px',
-              background: 'rgba(15, 23, 42, 0.85)',
-              border: '4px solid rgba(192, 132, 252, 0.6)',
-              fontSize: '72px',
-              marginBottom: '16px',
-              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5)'
+              width: '170px',
+              height: '170px',
+              borderRadius: '85px',
+              background: 'rgba(15, 23, 42, 0.9)',
+              border: `5px solid ${config.accent}`,
+              fontSize: '96px',
+              marginBottom: '24px',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)'
             }}
           >
             {trait.emoji}
@@ -112,18 +104,18 @@ export async function GET(req: NextRequest) {
 
           {/* Nickname */}
           {nickname ? (
-            <div style={{ fontSize: '22px', color: '#cbd5e1', fontWeight: 600, marginBottom: '4px' }}>
-              {nickname}님의 대표 성향은
+            <div style={{ fontSize: '24px', color: '#cbd5e1', fontWeight: 600, marginBottom: '6px' }}>
+              {nickname}님의 대표 성향
             </div>
           ) : null}
 
           {/* Animal Name */}
           <div
             style={{
-              fontSize: '44px',
+              fontSize: '48px',
               fontWeight: 900,
               color: '#ffffff',
-              marginBottom: '8px',
+              marginBottom: '10px',
               textAlign: 'center',
               letterSpacing: '-1px'
             }}
@@ -134,11 +126,11 @@ export async function GET(req: NextRequest) {
           {/* Subtitle */}
           <div
             style={{
-              fontSize: '22px',
+              fontSize: '24px',
               fontWeight: 600,
-              color: '#e9d5ff',
+              color: '#e2e8f0',
               textAlign: 'center',
-              maxWidth: '640px'
+              maxWidth: '680px'
             }}
           >
             &quot;{trait.title}&quot;
@@ -147,12 +139,15 @@ export async function GET(req: NextRequest) {
           {/* CTA Footer */}
           <div
             style={{
-              marginTop: '24px',
-              fontSize: '17px',
-              color: '#a5b4fc',
+              marginTop: '32px',
+              fontSize: '18px',
+              color: config.accent,
               display: 'flex',
               alignItems: 'center',
-              fontWeight: 600
+              fontWeight: 'bold',
+              background: 'rgba(255, 255, 255, 0.08)',
+              padding: '10px 24px',
+              borderRadius: '30px'
             }}
           >
             나와의 성향 궁합 지도 확인하기 ✨
@@ -161,8 +156,8 @@ export async function GET(req: NextRequest) {
       ),
       {
         width: 800,
-        height: 600,
-        fonts: fontsConfig,
+        height: 800,
+        emoji: 'twemoji',
         headers: {
           'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable'
         }
