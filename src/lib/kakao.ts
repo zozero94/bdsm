@@ -1,7 +1,10 @@
-// Kakao SDK Loader & Sharing Helper based on proven wedding-invitation architecture
+// Kakao JS SDK Official Default Feed Template Implementation
+// Based on https://developers.kakao.com/docs/ko/message-template/default#feed-object
 
 const KAKAO_APP_KEY =
   process.env.NEXT_PUBLIC_KAKAO_JS_KEY || '91f0317e2a9d5d066924b829dc5e8318';
+
+const BASE_PRODUCTION_DOMAIN = 'https://bdsm-zero.vercel.app';
 
 let kakaoSdkLoaded = false;
 let kakaoSdkLoading = false;
@@ -27,7 +30,7 @@ export function loadKakaoSDK(callback: () => void) {
       callback();
       return;
     } catch (e) {
-      console.error('Failed to init Kakao', e);
+      console.error('Failed to init Kakao SDK', e);
     }
   }
 
@@ -48,7 +51,7 @@ export function loadKakaoSDK(callback: () => void) {
         window.Kakao.init(KAKAO_APP_KEY);
       }
     } catch (e) {
-      console.error('Kakao init error on load', e);
+      console.error('Kakao init error on script load', e);
     }
     kakaoSdkCallbacks.forEach((cb) => cb());
     kakaoSdkCallbacks = [];
@@ -81,7 +84,7 @@ export function shareKakaoFeed({
   // @ts-expect-error Kakao SDK
   const kakao = window.Kakao;
   if (!kakao) {
-    console.error('Kakao SDK not found');
+    console.error('Kakao SDK not available on window');
     return false;
   }
 
@@ -94,37 +97,37 @@ export function shareKakaoFeed({
     }
   }
 
-  // Ensure robust absolute HTTPS static image (Kakao scraper requires instant response)
-  const finalImageUrl =
-    imageUrl || 'https://bdsm-zero.vercel.app/app-icon.png';
+  const validTargetUrl = targetUrl || BASE_PRODUCTION_DOMAIN;
+  const validImageUrl = imageUrl || `${BASE_PRODUCTION_DOMAIN}/app-icon.png`;
 
   try {
+    // Official Kakao Feed Template (JavaScript SDK)
     kakao.Share.sendDefault({
       objectType: 'feed',
       content: {
         title,
         description,
-        imageUrl: finalImageUrl,
+        imageUrl: validImageUrl,
         imageWidth: 800,
         imageHeight: 800,
         link: {
-          mobileWebUrl: targetUrl,
-          webUrl: targetUrl
+          mobileWebUrl: validTargetUrl,
+          webUrl: validTargetUrl
         }
       },
       buttons: [
         {
           title: buttonTitle,
           link: {
-            mobileWebUrl: targetUrl,
-            webUrl: targetUrl
+            mobileWebUrl: validTargetUrl,
+            webUrl: validTargetUrl
           }
         }
       ]
     });
     return true;
   } catch (e) {
-    console.error('Kakao Share.sendDefault failed:', e);
+    console.error('Kakao Share.sendDefault error:', e);
     return false;
   }
 }
