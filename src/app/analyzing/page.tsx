@@ -35,7 +35,7 @@ export default function AnalyzingPage() {
       const timer2 = setTimeout(() => setStepIndex(2), 1400);
       const timer3 = setTimeout(() => setStepIndex(3), 2100);
       const timer4 = setTimeout(() => {
-        router.replace(`/result?data=${encoded}`);
+        router.replace(`/result?r=${encoded}`);
       }, 2800);
 
       return () => {

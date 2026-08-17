@@ -1,6 +1,6 @@
+import { TraitId, TestResultData } from '@/types/test';
 import { QUESTIONS } from '@/data/questions';
 import { TRAITS } from '@/data/traits';
-import { TestResultData, TraitId } from '@/types/test';
 
 export const ALL_TRAITS: TraitId[] = [
   'dominant',
@@ -24,91 +24,210 @@ export const ALL_TRAITS: TraitId[] = [
 ];
 
 export function calculateTestResults(
-  answers: Record<number, number>,
+  answers: Record<number, number>, // questionId -> score (1~5)
   nickname?: string
 ): TestResultData {
-  const traitRawScores: Record<TraitId, number> = {} as any;
-  const traitMaxPossible: Record<TraitId, number> = {} as any;
+  const rawScores: Record<TraitId, number> = {} as Record<TraitId, number>;
+  const maxPossibleScores: Record<TraitId, number> = {} as Record<TraitId, number>;
 
-  ALL_TRAITS.forEach((t) => {
-    traitRawScores[t] = 0;
-    traitMaxPossible[t] = 0;
+  ALL_TRAITS.forEach((trait) => {
+    rawScores[trait] = 0;
+    maxPossibleScores[trait] = 0;
   });
 
   QUESTIONS.forEach((q) => {
     const userChoice = answers[q.id] || 3;
-    const normalizedScore = (userChoice - 1) / 4;
+    const scoreFactor = (userChoice - 1) / 4;
 
-    Object.entries(q.weights).forEach(([tId, weight]) => {
-      const trait = tId as TraitId;
-      if (traitRawScores[trait] !== undefined) {
-        traitRawScores[trait] += normalizedScore * (weight || 0);
-        traitMaxPossible[trait] += 1.0 * (weight || 0);
+    Object.entries(q.weights).forEach(([traitKey, weight]) => {
+      const trait = traitKey as TraitId;
+      if (rawScores[trait] !== undefined && weight) {
+        rawScores[trait] += scoreFactor * weight;
+        maxPossibleScores[trait] += weight;
       }
     });
   });
 
-  const scores: Record<TraitId, number> = {} as Record<TraitId, number>;
+  const percentageScores: Record<TraitId, number> = {} as Record<TraitId, number>;
   ALL_TRAITS.forEach((trait) => {
-    const max = traitMaxPossible[trait];
-    if (max > 0) {
-      const percentage = Math.round((traitRawScores[trait] / max) * 100);
-      scores[trait] = Math.min(100, Math.max(0, percentage));
-    } else {
-      scores[trait] = 0;
-    }
+    const max = maxPossibleScores[trait] || 1;
+    const raw = rawScores[trait] || 0;
+    const pct = Math.round((raw / max) * 100);
+    percentageScores[trait] = Math.max(5, Math.min(99, pct));
   });
 
   const sortedTraits = [...ALL_TRAITS].sort(
-    (a, b) => (scores[b] || 0) - (scores[a] || 0)
+    (a, b) => percentageScores[b] - percentageScores[a]
   );
 
-  const primaryTrait = sortedTraits[0] || 'dominant';
+  const primaryTrait = sortedTraits[0];
   const secondaryTrait =
-    scores[sortedTraits[1]] >= 40 ? sortedTraits[1] : undefined;
+    percentageScores[sortedTraits[1]] >= 40 ? sortedTraits[1] : undefined;
 
   return {
-    scores,
+    scores: percentageScores,
     primaryTrait,
     secondaryTrait,
-    rawAnswers: QUESTIONS.map((q) => answers[q.id] || 3),
+    rawAnswers: Object.values(answers),
     timestamp: Date.now(),
     nickname: nickname?.trim() || undefined
   };
 }
 
-// URL-Safe Base64 인코딩 (+ -> -, / -> _, = 제거)
+export function calculateChemistry(
+  trait1: TraitId,
+  trait2: TraitId
+): { score: number; type: 'best' | 'worst' | 'challenge' | 'neutral'; title: string; description: string } {
+  const info1 = TRAITS[trait1];
+  const info2 = TRAITS[trait2];
+
+  if (!info1 || !info2) {
+    return { score: 50, type: 'neutral', title: '보통의 관계', description: '알 수 없는 관계입니다.' };
+  }
+
+  if (info1.bestMatches && info1.bestMatches.includes(trait2)) {
+    return {
+      score: 95,
+      type: 'best',
+      title: '환상의 꿀케미 조합',
+      description: `${info1.animal}와(과) ${info2.animal}은(는) 서로의 성향과 니즈를 완벽하게 채워주는 최고의 파트너입니다.`
+    };
+  }
+
+  if (info1.worstMatches && info1.worstMatches.includes(trait2)) {
+    return {
+      score: 30,
+      type: 'worst',
+      title: '주의가 필요한 상극 관계',
+      description: `${info1.animal}와(과) ${info2.animal}은(는) 가치관 충돌이 일어날 수 있어 세심한 배려와 조율이 필요합니다.`
+    };
+  }
+
+  if (info1.challengeMatches && info1.challengeMatches.includes(trait2)) {
+    return {
+      score: 75,
+      type: 'challenge',
+      title: '짜릿한 밀당 케미',
+      description: `${info1.animal}와(과) ${info2.animal}은(는) 긴장감 넘치는 티키타카를 자랑하는 흥미진진한 조합입니다.`
+    };
+  }
+
+  return {
+    score: 60,
+    type: 'neutral',
+    title: '무난하고 안정적인 관계',
+    description: `서로를 배려하며 자연스럽게 맞춰갈 수 있는 무난한 궁합입니다.`
+  };
+}
+
+// -------------------------------------------------------------
+// Ultra-Compact Binary Byte-Packed URL Serializer (40~48 chars)
+// Structure: [PrimaryTraitIndex(1B)] + [18 Scores (18B)] + [Nickname UTF-8 (NB)]
+// -------------------------------------------------------------
+
+function toUrlSafeBase64(uint8: Uint8Array): string {
+  let binary = '';
+  const len = uint8.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(uint8[i]);
+  }
+  const base64 = btoa(binary);
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function fromUrlSafeBase64(safeBase64: string): Uint8Array | null {
+  try {
+    let base64 = safeBase64.replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) {
+      base64 += '=';
+    }
+    const binary = atob(base64);
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+  } catch {
+    return null;
+  }
+}
+
+// Compact binary serializer (40~48 chars)
 export function encodeResultData(data: TestResultData): string {
   try {
-    const compactObj = {
-      n: data.nickname || '',
-      p: data.primaryTrait,
-      s: data.secondaryTrait || '',
-      t: data.timestamp,
-      sc: Object.entries(data.scores)
-        .map(([k, v]) => `${k}:${v}`)
-        .join(',')
-    };
-    const jsonStr = JSON.stringify(compactObj);
-    const base64 =
-      typeof window !== 'undefined'
-        ? btoa(encodeURIComponent(jsonStr))
-        : Buffer.from(encodeURIComponent(jsonStr)).toString('base64');
+    const primaryIdx = Math.max(0, ALL_TRAITS.indexOf(data.primaryTrait));
+    const scoresBytes = ALL_TRAITS.map((t) => Math.min(100, Math.max(0, data.scores[t] || 0)));
+    
+    // UTF-8 Nickname bytes
+    const nickname = (data.nickname || '').slice(0, 12);
+    const encoder = typeof TextEncoder !== 'undefined' ? new TextEncoder() : null;
+    const nicknameBytes = encoder ? encoder.encode(nickname) : [];
 
-    // URL-safe 변환
-    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const totalLen = 1 + ALL_TRAITS.length + 1 + nicknameBytes.length;
+    const buffer = new Uint8Array(totalLen);
+
+    // Byte 0: Primary Trait Index (0~17)
+    buffer[0] = primaryIdx;
+
+    // Bytes 1~18: 18 Trait Scores (0~100)
+    for (let i = 0; i < ALL_TRAITS.length; i++) {
+      buffer[1 + i] = scoresBytes[i];
+    }
+
+    // Byte 19: Nickname length
+    buffer[1 + ALL_TRAITS.length] = nicknameBytes.length;
+
+    // Bytes 20+: Nickname UTF-8
+    for (let i = 0; i < nicknameBytes.length; i++) {
+      buffer[1 + ALL_TRAITS.length + 1 + i] = nicknameBytes[i];
+    }
+
+    return toUrlSafeBase64(buffer);
   } catch (e) {
-    console.error('Failed to encode result data', e);
+    console.error('Failed to encode compact result data', e);
     return '';
   }
 }
 
-// URL-Safe Base64 디코딩 (복원 및 유효성 검증)
+// Compact binary & legacy JSON Base64 deserializer (100% backward compatible)
 export function decodeResultData(encoded: string): TestResultData | null {
   try {
     if (!encoded || typeof encoded !== 'string') return null;
 
-    // URL-safe 복원 (- -> +, _ -> / 및 패딩 계산)
+    // 1. Try Ultra-Compact Binary Decoding
+    const bytes = fromUrlSafeBase64(encoded);
+    if (bytes && bytes.length >= 1 + ALL_TRAITS.length + 1) {
+      const primaryIdx = bytes[0];
+      if (primaryIdx < ALL_TRAITS.length) {
+        const primaryTrait = ALL_TRAITS[primaryIdx];
+        const scores: Record<TraitId, number> = {} as Record<TraitId, number>;
+        
+        for (let i = 0; i < ALL_TRAITS.length; i++) {
+          scores[ALL_TRAITS[i]] = Math.min(100, Math.max(0, bytes[1 + i]));
+        }
+
+        const nickLen = bytes[1 + ALL_TRAITS.length];
+        let nickname: string | undefined;
+        if (nickLen > 0 && bytes.length >= 1 + ALL_TRAITS.length + 1 + nickLen) {
+          const nickSlice = bytes.slice(
+            1 + ALL_TRAITS.length + 1,
+            1 + ALL_TRAITS.length + 1 + nickLen
+          );
+          const decoder = typeof TextDecoder !== 'undefined' ? new TextDecoder() : null;
+          nickname = decoder ? decoder.decode(nickSlice) : undefined;
+        }
+
+        return {
+          scores,
+          primaryTrait,
+          timestamp: Date.now(),
+          nickname: nickname?.slice(0, 20)
+        };
+      }
+    }
+
+    // 2. Fallback to Legacy JSON Base64
     let base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
     while (base64.length % 4) {
       base64 += '=';
@@ -157,58 +276,4 @@ export function decodeResultData(encoded: string): TestResultData | null {
     console.error('Failed to decode result data', e);
     return null;
   }
-}
-
-export function calculateChemistry(
-  traitA: TraitId,
-  traitB: TraitId
-): {
-  score: number;
-  type: 'best' | 'worst' | 'challenge' | 'neutral';
-  title: string;
-  description: string;
-} {
-  const infoA = TRAITS[traitA];
-  if (!infoA) {
-    return {
-      score: 50,
-      type: 'neutral',
-      title: '평온한 조화',
-      description: '서로를 알아갈수록 새로운 매력을 발견할 수 있는 관계입니다.'
-    };
-  }
-
-  if (infoA.bestMatches.includes(traitB)) {
-    return {
-      score: 95,
-      type: 'best',
-      title: '💖 환상의 소울메이트 (95%)',
-      description: `서로의 성향이 완벽하게 맞물려 폭발적인 시너지와 만족감을 주는 최고의 궁합입니다!`
-    };
-  }
-
-  if (infoA.worstMatches.includes(traitB)) {
-    return {
-      score: 25,
-      type: 'worst',
-      title: '⚡ 불꽃 튀는 긴장 관계 (25%)',
-      description: `같은 영역을 두고 주도권 다툼이 일어날 수 있으니, 상호 배려와 명확한 룰이 필수적인 관계입니다.`
-    };
-  }
-
-  if (infoA.challengeMatches.includes(traitB)) {
-    return {
-      score: 80,
-      type: 'challenge',
-      title: '🎯 흥미진진한 도전 케미 (80%)',
-      description: `색다른 자극과 미지의 영역을 함께 탐험하며 깊은 유대감을 쌓아갈 수 있는 케미입니다.`
-    };
-  }
-
-  return {
-    score: 65,
-    type: 'neutral',
-    title: '🌿 조화로운 중립 케미 (65%)',
-    description: '서로 대화하며 취향을 조율해 나갈 때 편안하고 지속 가능한 관계를 맺을 수 있습니다.'
-  };
 }

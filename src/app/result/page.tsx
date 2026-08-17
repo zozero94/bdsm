@@ -28,7 +28,7 @@ import {
 
 function ResultContent() {
   const searchParams = useSearchParams();
-  const dataParam = searchParams.get('data');
+  const dataParam = searchParams.get('r') || searchParams.get('data');
   const [resultData, setResultData] = useState<TestResultData | null>(null);
   const [isError, setIsError] = useState(false);
   const [currentUrl, setCurrentUrl] = useState('');

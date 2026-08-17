@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { createRoom } from '@/lib/firebase';
 import { loadKakaoSDK, shareKakaoFeed } from '@/lib/kakao';
 import { copyToClipboard } from '@/lib/clipboard';
+import { encodeResultData } from '@/lib/calculate';
 
 interface ShareButtonsProps {
   primaryTraitId: TraitId;
@@ -35,14 +36,27 @@ export default function ShareButtons({
     setTimeout(() => setToastMessage(null), 2500);
   };
 
-  // Helper to get normalized, single-encoded result URL
+  // Helper to get ultra-compact, single-encoded result URL (40~48 chars)
   const getCleanResultUrl = () => {
     if (typeof window !== 'undefined') {
       const search = window.location.search;
-      if (search) {
+      if (search && search.includes('r=')) {
         return `${PRODUCTION_DOMAIN}/result${search}`;
       }
-      return window.location.href;
+    }
+    // Generate fresh ultra-compact URL
+    try {
+      const compact = encodeResultData({
+        scores,
+        primaryTrait: primaryTraitId,
+        nickname,
+        timestamp: Date.now()
+      });
+      if (compact) {
+        return `${PRODUCTION_DOMAIN}/result?r=${compact}`;
+      }
+    } catch {
+      // ignore
     }
     return resultUrl || `${PRODUCTION_DOMAIN}/result`;
   };
