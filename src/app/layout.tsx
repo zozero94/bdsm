@@ -26,6 +26,9 @@ export const metadata: Metadata = {
     'BDSM 테스트 무료'
   ],
   authors: [{ name: 'BDSM Lab' }],
+  verification: {
+    google: 'ACDUCtSnAIPRQARpHYhOO9Q5EOysRdmywgP3rSUkOKI'
+  },
   alternates: {
     canonical: SITE_URL
   },
@@ -90,6 +93,12 @@ export default function RootLayout({
   return (
     <html lang="ko" className="dark">
       <head>
+        {/* Google Site Verification Meta Tag */}
+        <meta
+          name="google-site-verification"
+          content="ACDUCtSnAIPRQARpHYhOO9Q5EOysRdmywgP3rSUkOKI"
+        />
+
         {/* JSON-LD Structured Data */}
         <script
           type="application/ld+json"
