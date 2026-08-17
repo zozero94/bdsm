@@ -1,4 +1,5 @@
 // Kakao JS SDK - 100% Identical Architecture to Proven Wedding Invitation
+// Key: b284a968f36e582c3034ecfe545e179b
 
 export const KAKAO_APP_KEY = 'b284a968f36e582c3034ecfe545e179b';
 const BASE_PRODUCTION_DOMAIN = 'https://bdsm-zero.vercel.app';
@@ -96,7 +97,9 @@ export function shareKakaoFeed({
   }
 
   const validImageUrl = imageUrl || `${BASE_PRODUCTION_DOMAIN}/app-icon.png`;
-  const validTargetUrl = targetUrl || BASE_PRODUCTION_DOMAIN;
+  // Ensure robust URI encoding to prevent 4002 parameter syntax errors
+  const rawUrl = targetUrl || BASE_PRODUCTION_DOMAIN;
+  const validTargetUrl = encodeURI(rawUrl);
 
   try {
     kakao.Share.sendDefault({
