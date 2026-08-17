@@ -1,6 +1,6 @@
 // Kakao JS SDK - 100% Identical Architecture to Proven Wedding Invitation
 
-export const KAKAO_APP_KEY = '25064adbf382bf6e0273e6da584c8017';
+export const KAKAO_APP_KEY = 'b284a968f36e582c3034ecfe545e179b';
 const BASE_PRODUCTION_DOMAIN = 'https://bdsm-zero.vercel.app';
 
 let kakaoSdkLoaded = false;
