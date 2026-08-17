@@ -8,7 +8,7 @@ import { calculateTestResults } from '@/lib/calculate';
 import { RoomData, RoomMember } from '@/types/test';
 import RoomNetworkGraph from '@/components/RoomNetworkGraph';
 import AdBanner from '@/components/AdBanner';
-import { loadKakaoSDK, shareKakaoFeed, initKakaoSync } from '@/lib/kakao';
+import { loadKakaoSDK, shareKakaoFeed } from '@/lib/kakao';
 import { copyToClipboard } from '@/lib/clipboard';
 import { Users, Copy, Check, Sparkles, ArrowRight, UserPlus, MessageCircle } from 'lucide-react';
 
@@ -24,11 +24,6 @@ export default function RoomPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [currentMember, setCurrentMember] = useState<RoomMember | null>(null);
-
-  // Pre-initialize Kakao SDK on mount
-  useEffect(() => {
-    initKakaoSync();
-  }, []);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -88,7 +83,7 @@ export default function RoomPage() {
     }
   };
 
-  const handleKakaoShareRoom = async () => {
+  const handleKakaoShareRoom = () => {
     const roomUrl = `${PRODUCTION_DOMAIN}/room/${roomId}`;
     const roomTitle = room?.name || '우리 모임 케미 맵';
     const memberCount = room?.members?.length || 1;
@@ -96,40 +91,29 @@ export default function RoomPage() {
     const shareDesc = `현재 ${memberCount}명이 모여있어요! 우리 모임의 궁합 지도를 확인해보세요.`;
     const staticThumbnail = `${PRODUCTION_DOMAIN}/app-icon.png`;
 
-    // 1. Try Kakao JS SDK Feed Share
-    let kakaoSent = false;
-    try {
-      loadKakaoSDK(() => {
-        kakaoSent = shareKakaoFeed({
-          title: shareTitle,
-          description: shareDesc,
-          imageUrl: staticThumbnail,
-          targetUrl: roomUrl,
-          buttonTitle: '같이 결과 보기'
-        });
+    loadKakaoSDK(() => {
+      const success = shareKakaoFeed({
+        title: shareTitle,
+        description: shareDesc,
+        imageUrl: staticThumbnail,
+        targetUrl: roomUrl,
+        buttonTitle: '같이 결과 보기'
       });
-    } catch {
-      kakaoSent = false;
-    }
 
-    // 2. If In-App Browser blocks custom scheme (Error 4002), fallback to Native Web Share
-    if (!kakaoSent && typeof navigator !== 'undefined' && navigator.share) {
-      try {
-        await navigator.share({
-          title: shareTitle,
-          text: shareDesc,
-          url: roomUrl
-        });
-        return;
-      } catch (err: any) {
-        if (err.name === 'AbortError') return;
+      if (!success) {
+        if (typeof navigator !== 'undefined' && navigator.share) {
+          navigator
+            .share({
+              title: shareTitle,
+              text: shareDesc,
+              url: roomUrl
+            })
+            .catch(() => handleCopyRoomLink());
+        } else {
+          handleCopyRoomLink();
+        }
       }
-    }
-
-    // 3. Final Fallback: Copy Link
-    if (!kakaoSent) {
-      handleCopyRoomLink();
-    }
+    });
   };
 
   const handleJoinMyResult = async () => {

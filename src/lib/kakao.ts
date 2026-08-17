@@ -1,5 +1,4 @@
-// Kakao JS SDK Official Default Feed Template Implementation
-// Key: 25064adbf382bf6e0273e6da584c8017
+// Kakao JS SDK - 100% Identical Architecture to Proven Wedding Invitation
 
 export const KAKAO_APP_KEY = '25064adbf382bf6e0273e6da584c8017';
 const BASE_PRODUCTION_DOMAIN = 'https://bdsm-zero.vercel.app';
@@ -8,38 +7,31 @@ let kakaoSdkLoaded = false;
 let kakaoSdkLoading = false;
 let kakaoSdkCallbacks: Array<() => void> = [];
 
-export function isKakaoInitialized(): boolean {
-  if (typeof window === 'undefined') return false;
-  // @ts-expect-error Kakao SDK
-  return !!(window.Kakao && window.Kakao.isInitialized && window.Kakao.isInitialized());
-}
-
-export function initKakaoSync(): boolean {
-  if (typeof window === 'undefined') return false;
-  // @ts-expect-error Kakao SDK
-  const kakao = window.Kakao;
-  if (!kakao) return false;
-
-  if (!kakao.isInitialized()) {
-    try {
-      kakao.init(KAKAO_APP_KEY);
-    } catch (e) {
-      console.error('Kakao init error', e);
-      return false;
-    }
-  }
-  return kakao.isInitialized();
-}
-
 export function loadKakaoSDK(callback: () => void) {
   if (typeof window === 'undefined') return;
 
-  if (isKakaoInitialized()) {
+  // @ts-expect-error Kakao SDK
+  if (window.Kakao && window.Kakao.isInitialized && window.Kakao.isInitialized()) {
     callback();
     return;
   }
 
-  if (initKakaoSync()) {
+  // @ts-expect-error Kakao SDK
+  if (window.Kakao && window.Kakao.init) {
+    try {
+      // @ts-expect-error Kakao SDK
+      if (!window.Kakao.isInitialized()) {
+        // @ts-expect-error Kakao SDK
+        window.Kakao.init(KAKAO_APP_KEY);
+      }
+      callback();
+      return;
+    } catch {
+      // ignore
+    }
+  }
+
+  if (kakaoSdkLoaded) {
     callback();
     return;
   }
@@ -54,7 +46,15 @@ export function loadKakaoSDK(callback: () => void) {
   script.onload = () => {
     kakaoSdkLoaded = true;
     kakaoSdkLoading = false;
-    initKakaoSync();
+    try {
+      // @ts-expect-error Kakao SDK
+      if (window.Kakao && !window.Kakao.isInitialized()) {
+        // @ts-expect-error Kakao SDK
+        window.Kakao.init(KAKAO_APP_KEY);
+      }
+    } catch (e) {
+      console.error('Kakao init error on load', e);
+    }
     kakaoSdkCallbacks.forEach((cb) => cb());
     kakaoSdkCallbacks = [];
   };
@@ -87,16 +87,14 @@ export function shareKakaoFeed({
   const kakao = window.Kakao;
   if (!kakao) return false;
 
-  if (!kakao.isInitialized()) {
-    try {
+  try {
+    if (!kakao.isInitialized()) {
       kakao.init(KAKAO_APP_KEY);
-    } catch (e) {
-      console.error('Failed to initialize Kakao SDK', e);
-      return false;
     }
+  } catch {
+    return false;
   }
 
-  // Use guaranteed static PNG image to avoid 4002 parameter errors from dynamic scrapers
   const validImageUrl = imageUrl || `${BASE_PRODUCTION_DOMAIN}/app-icon.png`;
   const validTargetUrl = targetUrl || BASE_PRODUCTION_DOMAIN;
 
@@ -126,7 +124,7 @@ export function shareKakaoFeed({
     });
     return true;
   } catch (e) {
-    console.error('Kakao Share.sendDefault error:', e);
+    console.error('Kakao Share failed:', e);
     return false;
   }
 }

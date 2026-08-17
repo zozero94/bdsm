@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { TraitId } from '@/types/test';
 import { TRAITS } from '@/data/traits';
 import { Check, MessageCircle, Users, Copy, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createRoom } from '@/lib/firebase';
-import { shareKakaoFeed, initKakaoSync, loadKakaoSDK } from '@/lib/kakao';
+import { loadKakaoSDK, shareKakaoFeed } from '@/lib/kakao';
 import { copyToClipboard } from '@/lib/clipboard';
 
 interface ShareButtonsProps {
@@ -30,11 +30,6 @@ export default function ShareButtons({
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const trait = TRAITS[primaryTraitId] || TRAITS.dominant;
 
-  // Pre-initialize Kakao SDK on mount
-  useEffect(() => {
-    initKakaoSync();
-  }, []);
-
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 2500);
@@ -53,50 +48,24 @@ export default function ShareButtons({
     }
   };
 
-  // Synchronous Direct Kakao Share
-  const handleKakaoShare = async () => {
+  // Exactly matches wedding invitation: loadKakaoSDK -> shareKakaoFeed -> fallback
+  const handleKakaoShare = () => {
     const targetLink =
-      (typeof window !== 'undefined' ? window.location.href : '') ||
-      resultUrl ||
-      `${PRODUCTION_DOMAIN}/result`;
-      
+      resultUrl || (typeof window !== 'undefined' ? window.location.href : `${PRODUCTION_DOMAIN}/result`);
     const shareTitle = `${nickname ? nickname + '님의 ' : ''}BDSM 성향: [${trait.animal}]`;
     const shareDesc = `"${trait.title}" - 나와의 성향 궁합을 확인해보세요!`;
     const staticThumbnail = `${PRODUCTION_DOMAIN}/app-icon.png`;
 
-    // Ensure Kakao is initialized synchronously in User Gesture thread
-    initKakaoSync();
-
-    // 1. Attempt Kakao JS SDK Share directly
-    let sent = false;
-    try {
-      sent = shareKakaoFeed({
+    loadKakaoSDK(() => {
+      const success = shareKakaoFeed({
         title: shareTitle,
         description: shareDesc,
         imageUrl: staticThumbnail,
         targetUrl: targetLink,
         buttonTitle: '나는 어떤 성향일까?'
       });
-    } catch (e) {
-      console.warn('Kakao Share direct attempt failed', e);
-      sent = false;
-    }
 
-    if (sent) return;
-
-    // 2. If SDK was not ready, try on-demand load and fire
-    if (!sent) {
-      loadKakaoSDK(() => {
-        const retrySent = shareKakaoFeed({
-          title: shareTitle,
-          description: shareDesc,
-          imageUrl: staticThumbnail,
-          targetUrl: targetLink,
-          buttonTitle: '나는 어떤 성향일까?'
-        });
-        if (retrySent) return;
-
-        // Fallback inside callback if still failed
+      if (!success) {
         if (typeof navigator !== 'undefined' && navigator.share) {
           navigator
             .share({
@@ -108,26 +77,8 @@ export default function ShareButtons({
         } else {
           handleCopyLink();
         }
-      });
-      return;
-    }
-
-    // 3. Fallback to Native Web Share
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      try {
-        await navigator.share({
-          title: shareTitle,
-          text: shareDesc,
-          url: targetLink
-        });
-        return;
-      } catch (err: any) {
-        if (err.name === 'AbortError') return;
       }
-    }
-
-    // 4. Final Fallback: Copy Link
-    handleCopyLink();
+    });
   };
 
   const handleCreateRoom = async () => {

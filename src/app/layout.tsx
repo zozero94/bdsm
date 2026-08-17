@@ -121,12 +121,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
 
-        {/* Kakao JavaScript SDK: Official 2.7.4 release */}
-        <Script
-          src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js"
-          strategy="afterInteractive"
-          crossOrigin="anonymous"
-        />
+
 
         {/* Google AdSense Auto Ads Script */}
         <Script
