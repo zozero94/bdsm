@@ -1,7 +1,6 @@
 // Kakao JS SDK Official Default Feed Template Implementation
-// Based on https://developers.kakao.com/docs/ko/message-template/default#feed-object
+// Key: 25064adbf382bf6e0273e6da584c8017
 
-// Direct binding to bypass any outdated Vercel dashboard environment variables
 export const KAKAO_APP_KEY = '25064adbf382bf6e0273e6da584c8017';
 const BASE_PRODUCTION_DOMAIN = 'https://bdsm-zero.vercel.app';
 
@@ -24,7 +23,6 @@ export function initKakaoSync(): boolean {
   if (!kakao.isInitialized()) {
     try {
       kakao.init(KAKAO_APP_KEY);
-      console.log('Kakao initialized with key:', KAKAO_APP_KEY);
     } catch (e) {
       console.error('Kakao init error', e);
       return false;
@@ -87,10 +85,7 @@ export function shareKakaoFeed({
 
   // @ts-expect-error Kakao SDK
   const kakao = window.Kakao;
-  if (!kakao) {
-    console.error('Kakao SDK not available on window');
-    return false;
-  }
+  if (!kakao) return false;
 
   if (!kakao.isInitialized()) {
     try {
@@ -101,8 +96,9 @@ export function shareKakaoFeed({
     }
   }
 
-  const validTargetUrl = targetUrl || BASE_PRODUCTION_DOMAIN;
+  // Use guaranteed static PNG image to avoid 4002 parameter errors from dynamic scrapers
   const validImageUrl = imageUrl || `${BASE_PRODUCTION_DOMAIN}/app-icon.png`;
+  const validTargetUrl = targetUrl || BASE_PRODUCTION_DOMAIN;
 
   try {
     kakao.Share.sendDefault({
