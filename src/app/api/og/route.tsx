@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { TRAITS } from '@/data/traits';
 import { TraitId } from '@/types/test';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 const BG_CONFIG: Record<TraitId, { bg1: string; bg2: string; accent: string }> = {
   dominant: { bg1: '#3b0764', bg2: '#0f172a', accent: '#c084fc' },
