@@ -1,37 +1,47 @@
 // Kakao JS SDK Official Default Feed Template Implementation
 // Based on https://developers.kakao.com/docs/ko/message-template/default#feed-object
 
-const KAKAO_APP_KEY =
-  process.env.NEXT_PUBLIC_KAKAO_JS_KEY || '91f0317e2a9d5d066924b829dc5e8318';
-
+export const KAKAO_APP_KEY = '91f0317e2a9d5d066924b829dc5e8318';
 const BASE_PRODUCTION_DOMAIN = 'https://bdsm-zero.vercel.app';
 
 let kakaoSdkLoaded = false;
 let kakaoSdkLoading = false;
 let kakaoSdkCallbacks: Array<() => void> = [];
 
+export function isKakaoInitialized(): boolean {
+  if (typeof window === 'undefined') return false;
+  // @ts-expect-error Kakao SDK
+  return !!(window.Kakao && window.Kakao.isInitialized && window.Kakao.isInitialized());
+}
+
+export function initKakaoSync(): boolean {
+  if (typeof window === 'undefined') return false;
+  // @ts-expect-error Kakao SDK
+  const kakao = window.Kakao;
+  if (!kakao) return false;
+
+  if (!kakao.isInitialized()) {
+    try {
+      kakao.init(KAKAO_APP_KEY);
+    } catch (e) {
+      console.error('Kakao init error', e);
+      return false;
+    }
+  }
+  return kakao.isInitialized();
+}
+
 export function loadKakaoSDK(callback: () => void) {
   if (typeof window === 'undefined') return;
 
-  // @ts-expect-error Kakao SDK
-  if (window.Kakao && window.Kakao.isInitialized && window.Kakao.isInitialized()) {
+  if (isKakaoInitialized()) {
     callback();
     return;
   }
 
-  // @ts-expect-error Kakao SDK
-  if (window.Kakao && window.Kakao.init) {
-    try {
-      // @ts-expect-error Kakao SDK
-      if (!window.Kakao.isInitialized()) {
-        // @ts-expect-error Kakao SDK
-        window.Kakao.init(KAKAO_APP_KEY);
-      }
-      callback();
-      return;
-    } catch (e) {
-      console.error('Failed to init Kakao SDK', e);
-    }
+  if (initKakaoSync()) {
+    callback();
+    return;
   }
 
   kakaoSdkCallbacks.push(callback);
@@ -44,15 +54,7 @@ export function loadKakaoSDK(callback: () => void) {
   script.onload = () => {
     kakaoSdkLoaded = true;
     kakaoSdkLoading = false;
-    try {
-      // @ts-expect-error Kakao SDK
-      if (window.Kakao && !window.Kakao.isInitialized()) {
-        // @ts-expect-error Kakao SDK
-        window.Kakao.init(KAKAO_APP_KEY);
-      }
-    } catch (e) {
-      console.error('Kakao init error on script load', e);
-    }
+    initKakaoSync();
     kakaoSdkCallbacks.forEach((cb) => cb());
     kakaoSdkCallbacks = [];
   };
@@ -101,7 +103,6 @@ export function shareKakaoFeed({
   const validImageUrl = imageUrl || `${BASE_PRODUCTION_DOMAIN}/app-icon.png`;
 
   try {
-    // Official Kakao Feed Template (JavaScript SDK)
     kakao.Share.sendDefault({
       objectType: 'feed',
       content: {

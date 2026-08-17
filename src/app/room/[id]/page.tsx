@@ -8,7 +8,7 @@ import { calculateTestResults } from '@/lib/calculate';
 import { RoomData, RoomMember } from '@/types/test';
 import RoomNetworkGraph from '@/components/RoomNetworkGraph';
 import AdBanner from '@/components/AdBanner';
-import { loadKakaoSDK, shareKakaoFeed } from '@/lib/kakao';
+import { loadKakaoSDK, shareKakaoFeed, initKakaoSync } from '@/lib/kakao';
 import { Users, Copy, Check, Sparkles, ArrowRight, UserPlus, MessageCircle } from 'lucide-react';
 
 const PRODUCTION_DOMAIN = 'https://bdsm-zero.vercel.app';
@@ -21,6 +21,11 @@ export default function RoomPage() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [currentMember, setCurrentMember] = useState<RoomMember | null>(null);
+
+  // Pre-initialize Kakao SDK on mount
+  useEffect(() => {
+    initKakaoSync();
+  }, []);
 
   // Load current user member info from storage if available
   useEffect(() => {

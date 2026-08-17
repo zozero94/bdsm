@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TraitId } from '@/types/test';
 import { TRAITS } from '@/data/traits';
 import { Check, MessageCircle, Users, Copy, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createRoom } from '@/lib/firebase';
-import { loadKakaoSDK, shareKakaoFeed } from '@/lib/kakao';
+import { loadKakaoSDK, shareKakaoFeed, initKakaoSync } from '@/lib/kakao';
 
 interface ShareButtonsProps {
   primaryTraitId: TraitId;
@@ -28,6 +28,11 @@ export default function ShareButtons({
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const trait = TRAITS[primaryTraitId] || TRAITS.dominant;
 
+  // Pre-initialize Kakao SDK on mount
+  useEffect(() => {
+    initKakaoSync();
+  }, []);
+
   // Standard Link Copy
   const handleCopyLink = async () => {
     const targetUrl =
@@ -48,7 +53,7 @@ export default function ShareButtons({
     }
   };
 
-  // Kakao Share using verified wedding-invitation pipeline
+  // Kakao Share using verified pipeline
   const handleKakaoShare = () => {
     let targetLink = `${PRODUCTION_DOMAIN}/result`;
     if (typeof window !== 'undefined') {
