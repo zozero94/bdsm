@@ -53,7 +53,7 @@ export default function ShareButtons({
     }
   };
 
-  // Synchronous Direct Kakao Share with Seamless Fallbacks
+  // Synchronous Direct Kakao Share with Dynamic Animal Character Card
   const handleKakaoShare = async () => {
     const targetLink =
       (typeof window !== 'undefined' ? window.location.href : '') ||
@@ -62,7 +62,11 @@ export default function ShareButtons({
       
     const shareTitle = `${nickname ? nickname + '님의 ' : ''}BDSM 성향: [${trait.animal}]`;
     const shareDesc = `"${trait.title}" - 나와의 성향 궁합을 확인해보세요!`;
-    const staticThumbnail = `${PRODUCTION_DOMAIN}/app-icon.png`;
+    
+    // Dynamic Trait Animal Character Card Image URL
+    const animalCardImageUrl = `${PRODUCTION_DOMAIN}/api/og?trait=${primaryTraitId}${
+      nickname ? `&nickname=${encodeURIComponent(nickname)}` : ''
+    }`;
 
     // Ensure Kakao is initialized synchronously in User Gesture thread
     initKakaoSync();
@@ -73,7 +77,7 @@ export default function ShareButtons({
       sent = shareKakaoFeed({
         title: shareTitle,
         description: shareDesc,
-        imageUrl: staticThumbnail,
+        imageUrl: animalCardImageUrl,
         targetUrl: targetLink,
         buttonTitle: '나는 어떤 성향일까?'
       });
@@ -90,7 +94,7 @@ export default function ShareButtons({
         const retrySent = shareKakaoFeed({
           title: shareTitle,
           description: shareDesc,
-          imageUrl: staticThumbnail,
+          imageUrl: animalCardImageUrl,
           targetUrl: targetLink,
           buttonTitle: '나는 어떤 성향일까?'
         });
