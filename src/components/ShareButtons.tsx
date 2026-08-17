@@ -6,7 +6,7 @@ import { TRAITS } from '@/data/traits';
 import { Check, MessageCircle, Users, Copy, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createRoom } from '@/lib/firebase';
-import { loadKakaoSDK, shareKakaoFeed, initKakaoSync } from '@/lib/kakao';
+import { shareKakaoFeed, initKakaoSync, loadKakaoSDK } from '@/lib/kakao';
 import { copyToClipboard } from '@/lib/clipboard';
 
 interface ShareButtonsProps {
@@ -53,32 +53,67 @@ export default function ShareButtons({
     }
   };
 
-  // 3-Tier Robust Sharing: Kakao Share -> Native Web Share API -> Clipboard Copy
+  // Synchronous Direct Kakao Share with Seamless Fallbacks
   const handleKakaoShare = async () => {
     const targetLink =
-      resultUrl || (typeof window !== 'undefined' ? window.location.href : `${PRODUCTION_DOMAIN}/result`);
+      (typeof window !== 'undefined' ? window.location.href : '') ||
+      resultUrl ||
+      `${PRODUCTION_DOMAIN}/result`;
+      
     const shareTitle = `${nickname ? nickname + '님의 ' : ''}BDSM 성향: [${trait.animal}]`;
     const shareDesc = `"${trait.title}" - 나와의 성향 궁합을 확인해보세요!`;
     const staticThumbnail = `${PRODUCTION_DOMAIN}/app-icon.png`;
 
-    // 1. Try Kakao JS SDK Feed Share
-    let kakaoSent = false;
+    // Ensure Kakao is initialized synchronously in User Gesture thread
+    initKakaoSync();
+
+    // 1. Attempt Kakao JS SDK Share directly
+    let sent = false;
     try {
+      sent = shareKakaoFeed({
+        title: shareTitle,
+        description: shareDesc,
+        imageUrl: staticThumbnail,
+        targetUrl: targetLink,
+        buttonTitle: '나는 어떤 성향일까?'
+      });
+    } catch (e) {
+      console.warn('Kakao Share direct attempt failed', e);
+      sent = false;
+    }
+
+    if (sent) return;
+
+    // 2. If SDK was not ready, try on-demand load and fire
+    if (!sent) {
       loadKakaoSDK(() => {
-        kakaoSent = shareKakaoFeed({
+        const retrySent = shareKakaoFeed({
           title: shareTitle,
           description: shareDesc,
           imageUrl: staticThumbnail,
           targetUrl: targetLink,
           buttonTitle: '나는 어떤 성향일까?'
         });
+        if (retrySent) return;
+
+        // Fallback inside callback if still failed
+        if (typeof navigator !== 'undefined' && navigator.share) {
+          navigator
+            .share({
+              title: shareTitle,
+              text: shareDesc,
+              url: targetLink
+            })
+            .catch(() => handleCopyLink());
+        } else {
+          handleCopyLink();
+        }
       });
-    } catch {
-      kakaoSent = false;
+      return;
     }
 
-    // 2. If In-App Browser blocks custom scheme (Error 4002), fallback to Native Web Share
-    if (!kakaoSent && typeof navigator !== 'undefined' && navigator.share) {
+    // 3. Fallback to Native Web Share
+    if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share({
           title: shareTitle,
@@ -87,14 +122,12 @@ export default function ShareButtons({
         });
         return;
       } catch (err: any) {
-        if (err.name === 'AbortError') return; // User cancelled share
+        if (err.name === 'AbortError') return;
       }
     }
 
-    // 3. Final Fallback: Copy Link
-    if (!kakaoSent) {
-      handleCopyLink();
-    }
+    // 4. Final Fallback: Copy Link
+    handleCopyLink();
   };
 
   const handleCreateRoom = async () => {
