@@ -7,6 +7,7 @@ import { Check, MessageCircle, Users, Copy, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createRoom } from '@/lib/firebase';
 import { loadKakaoSDK, shareKakaoFeed, initKakaoSync } from '@/lib/kakao';
+import { copyToClipboard } from '@/lib/clipboard';
 
 interface ShareButtonsProps {
   primaryTraitId: TraitId;
@@ -36,31 +37,19 @@ export default function ShareButtons({
   // Standard Link Copy
   const handleCopyLink = async () => {
     const targetUrl =
-      resultUrl || (typeof window !== 'undefined' ? window.location.href : '');
-    try {
-      await navigator.clipboard.writeText(targetUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch {
-      const textArea = document.createElement('textarea');
-      textArea.value = targetUrl;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
+      resultUrl || (typeof window !== 'undefined' ? window.location.href : `${PRODUCTION_DOMAIN}/result`);
+    
+    const success = await copyToClipboard(targetUrl);
+    if (success) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     }
   };
 
-  // Kakao Share using verified pipeline
+  // Kakao Share using verified pipeline with resultUrl prioritization
   const handleKakaoShare = () => {
-    let targetLink = `${PRODUCTION_DOMAIN}/result`;
-    if (typeof window !== 'undefined') {
-      const search = window.location.search;
-      targetLink = `${PRODUCTION_DOMAIN}/result${search}`;
-    }
-
+    const targetLink =
+      resultUrl || (typeof window !== 'undefined' ? window.location.href : `${PRODUCTION_DOMAIN}/result`);
     const staticThumbnail = `${PRODUCTION_DOMAIN}/app-icon.png`;
 
     loadKakaoSDK(() => {

@@ -9,6 +9,7 @@ import { RoomData, RoomMember } from '@/types/test';
 import RoomNetworkGraph from '@/components/RoomNetworkGraph';
 import AdBanner from '@/components/AdBanner';
 import { loadKakaoSDK, shareKakaoFeed, initKakaoSync } from '@/lib/kakao';
+import { copyToClipboard } from '@/lib/clipboard';
 import { Users, Copy, Check, Sparkles, ArrowRight, UserPlus, MessageCircle } from 'lucide-react';
 
 const PRODUCTION_DOMAIN = 'https://bdsm-zero.vercel.app';
@@ -20,6 +21,7 @@ export default function RoomPage() {
   const [room, setRoom] = useState<RoomData | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
   const [currentMember, setCurrentMember] = useState<RoomMember | null>(null);
 
   // Pre-initialize Kakao SDK on mount
@@ -71,12 +73,9 @@ export default function RoomPage() {
   }, [roomId]);
 
   const handleCopyRoomLink = async () => {
-    const url = typeof window !== 'undefined' ? window.location.href : '';
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch {
+    const url = typeof window !== 'undefined' ? window.location.href : `${PRODUCTION_DOMAIN}/room/${roomId}`;
+    const success = await copyToClipboard(url);
+    if (success) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     }
@@ -103,8 +102,16 @@ export default function RoomPage() {
   };
 
   const handleJoinMyResult = async () => {
-    if (!currentMember || !roomId) return;
-    await joinRoom(roomId, currentMember);
+    if (!currentMember || !roomId || isJoining) return;
+    try {
+      setIsJoining(true);
+      await joinRoom(roomId, currentMember);
+    } catch (e) {
+      console.error('Failed to join room', e);
+      alert('방 참여 중 오류가 발생했습니다.');
+    } finally {
+      setIsJoining(false);
+    }
   };
 
   if (loading) {
@@ -207,9 +214,10 @@ export default function RoomPage() {
           </div>
           <button
             onClick={handleJoinMyResult}
-            className="py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black shadow transition-transform active:scale-95"
+            disabled={isJoining}
+            className="py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black shadow transition-transform active:scale-95 disabled:opacity-50"
           >
-            방 참여하기
+            {isJoining ? '참여 중...' : '방 참여하기'}
           </button>
         </div>
       )}

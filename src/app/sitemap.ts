@@ -1,8 +1,10 @@
 import { MetadataRoute } from 'next';
 
+export const revalidate = 86400; // Cache sitemap for 24 hours
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://bdsm-zero.vercel.app';
-  const lastModified = new Date();
+  const lastModified = new Date('2026-08-17');
 
   return [
     {
@@ -16,12 +18,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified,
       changeFrequency: 'weekly',
       priority: 0.9
-    },
-    {
-      url: `${baseUrl}/result`,
-      lastModified,
-      changeFrequency: 'weekly',
-      priority: 0.8
     }
   ];
 }

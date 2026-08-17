@@ -38,13 +38,13 @@ export const metadata: Metadata = {
     description:
       '18가지 귀여운 동물 캐릭터와 정밀 가중치 분석으로 알아보는 BDSM 성향 테스트! 친구들과 실시간 궁합 지도도 만들어보세요.',
     url: SITE_URL,
-    siteName: 'BDSM 동물 성향 연구소',
+    siteName: 'BDSM 동물 성향 테스트',
     images: [
       {
         url: `${SITE_URL}/app-icon.png`,
-        width: 1200,
-        height: 630,
-        alt: 'BDSM 동물 성향 테스트'
+        width: 800,
+        height: 800,
+        alt: 'BDSM 동물 성향 테스트 대표 이미지'
       }
     ],
     locale: 'ko_KR',
@@ -53,19 +53,12 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'BDSM 동물 성향 테스트',
-    description: '귀여운 동물 캐릭터로 알아보는 18가지 성향 분석 & 친구 케미 맵',
+    description: '18가지 동물 캐릭터로 분석하는 내 안의 숨겨진 본능과 꿀케미 조합!',
     images: [`${SITE_URL}/app-icon.png`]
   },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1
-    }
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/app-icon.png'
   }
 };
 
@@ -74,21 +67,18 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // JSON-LD Structured Data for Rich Search Results (Quiz & FAQ)
   const jsonLd = [
     {
       '@context': 'https://schema.org',
-      '@type': 'Quiz',
+      '@type': 'WebApplication',
       name: 'BDSM 동물 성향 테스트',
-      description:
-        '18가지 동물 캐릭터로 알아보는 정밀 BDSM 성향 검사 및 친구 간 케미 매칭',
+      applicationCategory: 'EntertainmentApplication',
+      operatingSystem: 'All',
+      browserRequirements: 'Requires JavaScript. Requires HTML5.',
       url: SITE_URL,
-      provider: {
-        '@type': 'Organization',
-        name: 'BDSM 동물 성향 연구소',
-        url: SITE_URL
-      },
-      educationalLevel: 'Beginner',
-      assesses: 'BDSM Traits and Compatibility'
+      description:
+        '18가지 귀여운 동물 캐릭터와 정밀 가중치 문항으로 자신의 성향과 친구들과의 궁합을 분석하는 인터랙티브 웹 테스트.'
     },
     {
       '@context': 'https://schema.org',
@@ -96,18 +86,18 @@ export default function RootLayout({
       mainEntity: [
         {
           '@type': 'Question',
-          name: 'BDSM 동물 성향 테스트는 무엇인가요?',
+          name: 'BDSM 동물 성향 테스트란 무엇인가요?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: '도미넌트, 서브미시브, 사디스트, 마조히스트, 스위치 등 18가지 성향 지표를 동물 캐릭터로 시각화한 무료 온라인 심리테스트입니다.'
+            text: 'BDSM의 18가지 대표 성향을 친근한 동물 캐릭터로 재해석하여, 36가지 정밀 문항을 통해 본인의 성향과 상성을 쉽게 파악할 수 있도록 돕는 심리 분석 도구입니다.'
           }
         },
         {
           '@type': 'Question',
-          name: '검사 결과와 개인정보는 안전한가요?',
+          name: '검사 결과는 안전하게 보관되나요?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: '100% 완전한 익명으로 진행되며, 회원가입이나 개인정보 입력 없이 닉네임만으로 검사를 수행할 수 있습니다.'
+            text: '모든 검사 결과는 서버에 저장되지 않고 클라이언트 URL 파라미터로 암호화 인코딩되어 완벽한 익명성을 보장합니다.'
           }
         },
         {
@@ -125,12 +115,6 @@ export default function RootLayout({
   return (
     <html lang="ko" className="dark">
       <head>
-        {/* Google Site Verification Meta Tag */}
-        <meta
-          name="google-site-verification"
-          content="ACDUCtSnAIPRQARpHYhOO9Q5EOysRdmywgP3rSUkOKI"
-        />
-
         {/* JSON-LD Structured Data */}
         <script
           type="application/ld+json"
@@ -149,7 +133,7 @@ export default function RootLayout({
           async
           src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
           crossOrigin="anonymous"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
       </head>
       <body className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-between antialiased selection:bg-purple-500 selection:text-white">
