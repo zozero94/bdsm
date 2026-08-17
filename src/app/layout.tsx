@@ -44,32 +44,24 @@ export const metadata: Metadata = {
   }
 };
 
+const ADSENSE_CLIENT_ID =
+  process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || 'ca-pub-4169469417741632';
+
 export default function RootLayout({
   children
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const adClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
-
   return (
     <html lang="ko" className="dark">
       <head>
-        {/* Kakao JavaScript SDK: Load Once & Initialize Immediately */}
+        {/* Google AdSense Auto Ads Script */}
         <Script
-          src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
-          strategy="afterInteractive"
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
           crossOrigin="anonymous"
+          strategy="afterInteractive"
         />
-
-        {/* Google AdSense Script (When Client ID is provided) */}
-        {adClientId && (
-          <Script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClientId}`}
-            crossOrigin="anonymous"
-            strategy="lazyOnload"
-          />
-        )}
       </head>
       <body className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-between antialiased selection:bg-purple-500 selection:text-white">
         <Header />

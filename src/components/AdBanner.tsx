@@ -8,16 +8,18 @@ interface AdBannerProps {
   className?: string;
 }
 
+const ADSENSE_CLIENT_ID =
+  process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || 'ca-pub-4169469417741632';
+
 export default function AdBanner({
   slot = '1234567890',
   format = 'auto',
   className = ''
 }: AdBannerProps) {
-  const adClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
   const pushedRef = useRef(false);
 
   useEffect(() => {
-    if (adClientId && !pushedRef.current) {
+    if (ADSENSE_CLIENT_ID && !pushedRef.current) {
       try {
         // @ts-expect-error Google Ads script global array
         (window.adsbygoogle = window.adsbygoogle || []).push({});
@@ -26,7 +28,7 @@ export default function AdBanner({
         console.error('AdSense load error:', err);
       }
     }
-  }, [adClientId]);
+  }, []);
 
   return (
     <div
@@ -35,26 +37,14 @@ export default function AdBanner({
       <div className="text-[9px] tracking-wider text-slate-500 uppercase font-mono mb-1">
         ADVERTISEMENT
       </div>
-      {adClientId ? (
-        <ins
-          className="adsbygoogle block w-full min-h-[60px]"
-          style={{ display: 'block' }}
-          data-ad-client={adClientId}
-          data-ad-slot={slot}
-          data-ad-format={format}
-          data-full-width-responsive="true"
-        />
-      ) : (
-        <div className="flex flex-col items-center justify-center py-2 text-slate-400">
-          <div className="w-7 h-7 rounded-lg bg-slate-800/80 flex items-center justify-center text-slate-400 text-[10px] font-bold mb-1">
-            AD
-          </div>
-          <p className="text-xs font-medium text-slate-300">구글 애드센스 반응형 광고 영역</p>
-          <span className="text-[10px] text-slate-500 mt-0.5">
-            (NEXT_PUBLIC_ADSENSE_CLIENT_ID 연동 시 실시간 배너 송출)
-          </span>
-        </div>
-      )}
+      <ins
+        className="adsbygoogle block w-full min-h-[60px]"
+        style={{ display: 'block' }}
+        data-ad-client={ADSENSE_CLIENT_ID}
+        data-ad-slot={slot}
+        data-ad-format={format}
+        data-full-width-responsive="true"
+      />
     </div>
   );
 }
