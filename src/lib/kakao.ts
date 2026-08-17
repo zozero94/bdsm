@@ -80,8 +80,18 @@ export function shareKakaoFeed({
 
   // @ts-expect-error Kakao SDK
   const kakao = window.Kakao;
-  if (!kakao || !kakao.isInitialized || !kakao.isInitialized()) {
+  if (!kakao) {
+    console.error('Kakao SDK not found');
     return false;
+  }
+
+  if (!kakao.isInitialized()) {
+    try {
+      kakao.init(KAKAO_APP_KEY);
+    } catch (e) {
+      console.error('Failed to initialize Kakao SDK', e);
+      return false;
+    }
   }
 
   try {
@@ -110,7 +120,7 @@ export function shareKakaoFeed({
     });
     return true;
   } catch (e) {
-    console.error('Kakao Share.sendDefault failed', e);
+    console.error('Kakao Share.sendDefault failed:', e);
     return false;
   }
 }

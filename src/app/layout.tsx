@@ -74,7 +74,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // JSON-LD Structured Data for Google Rich Snippets & FAQ
   const jsonLd = [
     {
       '@context': 'https://schema.org',
@@ -136,6 +135,13 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+
+        {/* Kakao JavaScript SDK: Official 2.7.4 release */}
+        <Script
+          src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js"
+          strategy="afterInteractive"
+          crossOrigin="anonymous"
         />
 
         {/* Google AdSense Auto Ads Script */}
