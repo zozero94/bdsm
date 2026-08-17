@@ -28,7 +28,10 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'BDSM Lab' }],
   verification: {
-    google: 'ACDUCtSnAIPRQARpHYhOO9Q5EOysRdmywgP3rSUkOKI'
+    google: 'ACDUCtSnAIPRQARpHYhOO9Q5EOysRdmywgP3rSUkOKI',
+    other: {
+      'naver-site-verification': 'e900bdea20333fef3e433eb10011d36fb79ac15a'
+    }
   },
   alternates: {
     canonical: SITE_URL
