@@ -1,7 +1,8 @@
 import fs from 'fs';
 import path from 'path';
+import sharp from 'sharp';
 
-// 18 Traits Configuration
+// 18 Traits Configuration with Beautiful Gradient & Theme Colors
 const TRAITS_CONFIG = [
   { id: 'dominant', animal: '카리스마 흑표범', emoji: '🐆', title: '부드러운 카리스마의 지휘관', bg1: '#3b0764', bg2: '#0f172a', accent: '#c084fc' },
   { id: 'submissive', animal: '온순한 사슴', emoji: '🦌', title: '온화하고 순수한 헌신가', bg1: '#500724', bg2: '#0f172a', accent: '#f472b6' },
@@ -28,9 +29,9 @@ if (!fs.existsSync(outDir)) {
   fs.mkdirSync(outDir, { recursive: true });
 }
 
-// Generate beautiful standalone SVG cards (800x800)
-for (const t of TRAITS_CONFIG) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+async function generateImages() {
+  for (const t of TRAITS_CONFIG) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
   <defs>
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="${t.bg1}" />
@@ -50,13 +51,13 @@ for (const t of TRAITS_CONFIG) {
   <rect width="800" height="800" fill="url(#bgGrad)" />
 
   <!-- Background Ambient Glow -->
-  <circle cx="400" cy="330" r="220" fill="${t.accent}" opacity="0.18" filter="url(#glow)" />
+  <circle cx="400" cy="330" r="220" fill="${t.accent}" opacity="0.22" filter="url(#glow)" />
 
   <!-- Outer Card Frame -->
   <rect x="40" y="40" width="720" height="720" rx="36" fill="none" stroke="${t.accent}" stroke-width="2" opacity="0.4" />
 
   <!-- Top Pill Tag -->
-  <rect x="250" y="80" width="300" height="48" rx="24" fill="#0f172a" fill-opacity="0.8" stroke="${t.accent}" stroke-width="1.5" stroke-opacity="0.6" />
+  <rect x="250" y="80" width="300" height="48" rx="24" fill="#0f172a" fill-opacity="0.85" stroke="${t.accent}" stroke-width="1.5" stroke-opacity="0.6" />
   <text x="400" y="112" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="bold" fill="${t.accent}" text-anchor="middle">
     🐾 BDSM 동물 성향 테스트
   </text>
@@ -86,7 +87,18 @@ for (const t of TRAITS_CONFIG) {
   </text>
 </svg>`;
 
-  fs.writeFileSync(path.join(outDir, `${t.id}.svg`), svg, 'utf-8');
+    // Save SVG
+    fs.writeFileSync(path.join(outDir, `${t.id}.svg`), svg, 'utf-8');
+
+    // Convert to High Quality PNG (800x800)
+    await sharp(Buffer.from(svg))
+      .png({ quality: 95 })
+      .toFile(path.join(outDir, `${t.id}.png`));
+
+    console.log(`Generated ${t.id}.png & ${t.id}.svg`);
+  }
 }
 
-console.log('Successfully generated 18 trait SVG cards in public/images/traits/');
+generateImages().then(() => {
+  console.log('All 18 Trait PNG & SVG images successfully generated!');
+});

@@ -72,20 +72,18 @@ export default function ShareButtons({
     }
   };
 
-  // Direct Kakao Share with clean URL format & dynamic 800x800 bitmap card
+  // Direct Kakao Share with clean URL format & static high-res trait PNG card
   const handleKakaoShare = () => {
     const targetLink = getCleanResultUrl();
     const shareTitle = `${nickname ? nickname + '님의 ' : ''}BDSM 성향: [${trait.animal}]`;
     const shareDesc = `"${trait.title}" - 나와의 성향 궁합을 확인해보세요!`;
-    const dynamicCardImage = `${PRODUCTION_DOMAIN}/api/og?trait=${primaryTraitId}${
-      nickname ? `&nickname=${encodeURIComponent(nickname)}` : ''
-    }`;
+    const traitPngImage = `${PRODUCTION_DOMAIN}/images/traits/${primaryTraitId}.png`;
 
     loadKakaoSDK(() => {
       const success = shareKakaoFeed({
         title: shareTitle,
         description: shareDesc,
-        imageUrl: dynamicCardImage,
+        imageUrl: traitPngImage,
         targetUrl: targetLink,
         buttonTitle: '나는 어떤 성향일까?'
       });
