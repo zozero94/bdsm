@@ -39,12 +39,12 @@
 
   <!-- Animal Title Label -->
   <text x="400" y="510" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', sans-serif" font-size="44" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="-1">
-    장난꾸러기 라쿤
+    말썽꾸러기 라쿤
   </text>
 
   <!-- Trait Subtitle -->
   <text x="400" y="570" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', sans-serif" font-size="24" font-weight="bold" fill="#e2e8f0" text-anchor="middle">
-    &quot;선 넘을 듯 아슬아슬한 개구쟁이&quot;
+    &quot;길들여지고 싶은 장난꾸러기 반항아&quot;
   </text>
 
   <!-- CTA Footer Box -->

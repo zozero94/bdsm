@@ -34,17 +34,17 @@
 
   <!-- Big Animal Emoji -->
   <text x="400" y="355" font-family="'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif" font-size="120" text-anchor="middle">
-    🐧
+    🐶
   </text>
 
   <!-- Animal Title Label -->
   <text x="400" y="510" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', sans-serif" font-size="44" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="-1">
-    순수한 펭귄
+    솔직한 충견 강아지
   </text>
 
   <!-- Trait Subtitle -->
   <text x="400" y="570" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', sans-serif" font-size="24" font-weight="bold" fill="#e2e8f0" text-anchor="middle">
-    &quot;수치심을 즐기는 로맨티시스트&quot;
+    &quot;솔직한 복종 속에서 자유를 찾는 순정파&quot;
   </text>
 
   <!-- CTA Footer Box -->

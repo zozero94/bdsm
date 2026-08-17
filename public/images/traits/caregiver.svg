@@ -39,12 +39,12 @@
 
   <!-- Animal Title Label -->
   <text x="400" y="510" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', sans-serif" font-size="44" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="-1">
-    듬직한 불곰
+    따뜻한 아빠곰
   </text>
 
   <!-- Trait Subtitle -->
   <text x="400" y="570" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', sans-serif" font-size="24" font-weight="bold" fill="#e2e8f0" text-anchor="middle">
-    &quot;따뜻하게 감싸주는 보호자&quot;
+    &quot;따스하게 보살펴주는 안식처&quot;
   </text>
 
   <!-- CTA Footer Box -->

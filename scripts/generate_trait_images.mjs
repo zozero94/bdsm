@@ -2,26 +2,26 @@ import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
 
-// 18 Traits Configuration with Beautiful Gradient & Theme Colors
+// 18 Traits Official Configuration (100% Synced with src/data/traits.ts)
 const TRAITS_CONFIG = [
   { id: 'dominant', animal: '카리스마 흑표범', emoji: '🐆', title: '부드러운 카리스마의 지휘관', bg1: '#3b0764', bg2: '#0f172a', accent: '#c084fc' },
-  { id: 'submissive', animal: '온순한 사슴', emoji: '🦌', title: '온화하고 순수한 헌신가', bg1: '#500724', bg2: '#0f172a', accent: '#f472b6' },
-  { id: 'sadist', animal: '날카로운 매', emoji: '🦅', title: '짜릿한 긴장감의 지배자', bg1: '#4c0519', bg2: '#0f172a', accent: '#fb7185' },
-  { id: 'masochist', animal: '감성 고슴도치', emoji: '🦔', title: '아픔 속에 피어나는 감성', bg1: '#451a03', bg2: '#0f172a', accent: '#fb923c' },
-  { id: 'hunter', animal: '집요한 늑대', emoji: '🐺', title: '목표를 향해 달리는 추적자', bg1: '#064e3b', bg2: '#0f172a', accent: '#34d399' },
-  { id: 'prey', animal: '눈치 빠른 토끼', emoji: '🐰', title: '아슬아슬한 도망자', bg1: '#134e4a', bg2: '#0f172a', accent: '#2dd4bf' },
-  { id: 'caregiver', animal: '듬직한 불곰', emoji: '🐻', title: '따뜻하게 감싸주는 보호자', bg1: '#451a03', bg2: '#0f172a', accent: '#f59e0b' },
-  { id: 'little', animal: '사랑스러운 아기고양이', emoji: '🐱', title: '품에 안기고픈 순수 애교쟁이', bg1: '#4a044e', bg2: '#0f172a', accent: '#f472b6' },
-  { id: 'rigger', animal: '치밀한 거미', emoji: '🕷️', title: '정교한 매듭의 설계자', bg1: '#1e1b4b', bg2: '#0f172a', accent: '#818cf8' },
-  { id: 'rope_bottom', animal: '자유로운 나비', emoji: '🦋', title: '구속 속에서 피어나는 자유', bg1: '#082f49', bg2: '#0f172a', accent: '#38bdf8' },
-  { id: 'degrader', animal: '냉철한 독사', emoji: '🐍', title: '언어의 지배자', bg1: '#3f0c10', bg2: '#0f172a', accent: '#f87171' },
-  { id: 'degradee', animal: '순수한 펭귄', emoji: '🐧', title: '수치심을 즐기는 로맨티시스트', bg1: '#172554', bg2: '#0f172a', accent: '#60a5fa' },
-  { id: 'switch', animal: '변화무쌍 여우', emoji: '🦊', title: '상황에 따라 변하는 팔색조', bg1: '#064e3b', bg2: '#0f172a', accent: '#4ade80' },
-  { id: 'master', animal: '절대 권력 사자', emoji: '🦁', title: '품격 있는 완벽한 통솔자', bg1: '#422006', bg2: '#0f172a', accent: '#fbbf24' },
-  { id: 'slave', animal: '충직한 골든리트리버', emoji: '🐕', title: '모든 것을 바치는 충신', bg1: '#083344', bg2: '#0f172a', accent: '#22d3ee' },
-  { id: 'brat', animal: '장난꾸러기 라쿤', emoji: '🦝', title: '선 넘을 듯 아슬아슬한 개구쟁이', bg1: '#431407', bg2: '#0f172a', accent: '#fb923c' },
-  { id: 'brat_tamer', animal: '침착한 부엉이', emoji: '🦉', title: '밀당의 고수 조련사', bg1: '#292524', bg2: '#0f172a', accent: '#a8a29e' },
-  { id: 'spanker', animal: '묵직한 고릴라', emoji: '🦍', title: '손끝으로 전하는 짜릿함', bg1: '#450a0a', bg2: '#0f172a', accent: '#ef4444' }
+  { id: 'submissive', animal: '사랑받는 하얀토끼', emoji: '🐇', title: '다정하게 이끌림을 바라는 탐험가', bg1: '#500724', bg2: '#0f172a', accent: '#f472b6' },
+  { id: 'sadist', animal: '매혹적인 붉은여우', emoji: '🦊', title: '반응을 관찰하는 장난꾸러기 전략가', bg1: '#4c0519', bg2: '#0f172a', accent: '#fb7185' },
+  { id: 'masochist', animal: '포근한 햄스터', emoji: '🐹', title: '감각의 끝에서 평온을 찾는 힐러', bg1: '#451a03', bg2: '#0f172a', accent: '#fb923c' },
+  { id: 'switch', animal: '자유로운 카멜레온', emoji: '🦎', title: '상황과 무드에 따라 변신하는 마에스트로', bg1: '#064e3b', bg2: '#0f172a', accent: '#34d399' },
+  { id: 'master', animal: '고결한 백사자', emoji: '🦁', title: '절대적 신뢰의 완전한 지배자', bg1: '#422006', bg2: '#0f172a', accent: '#fbbf24' },
+  { id: 'slave', animal: '헌신적인 바다물개', emoji: '🦭', title: '온 마음을 바치는 순백의 헌신', bg1: '#083344', bg2: '#0f172a', accent: '#22d3ee' },
+  { id: 'brat', animal: '말썽꾸러기 라쿤', emoji: '🦝', title: '길들여지고 싶은 장난꾸러기 반항아', bg1: '#431407', bg2: '#0f172a', accent: '#fb923c' },
+  { id: 'brat_tamer', animal: '노련한 조련사 매', emoji: '🦅', title: '앙탈을 단숨에 제압하는 멘탈 마스터', bg1: '#292524', bg2: '#0f172a', accent: '#a8a29e' },
+  { id: 'spanker', animal: '리듬의 캥거루', emoji: '🦘', title: '손끝으로 감각을 깨우는 타격 마스터', bg1: '#450a0a', bg2: '#0f172a', accent: '#ef4444' },
+  { id: 'hunter', animal: '날카로운 늑대', emoji: '🐺', title: '목표를 쫓는 열정적 추격자', bg1: '#064e3b', bg2: '#0f172a', accent: '#34d399' },
+  { id: 'prey', animal: '숲속의 아기사슴', emoji: '🦌', title: '긴장감 넘치는 숨바꼭질 러버', bg1: '#134e4a', bg2: '#0f172a', accent: '#2dd4bf' },
+  { id: 'caregiver', animal: '따뜻한 아빠곰', emoji: '🐻', title: '따스하게 보살펴주는 안식처', bg1: '#451a03', bg2: '#0f172a', accent: '#f59e0b' },
+  { id: 'little', animal: '애교쟁이 아기고양이', emoji: '🐱', title: '무한한 애정을 갈구하는 귀염둥이', bg1: '#4a044e', bg2: '#0f172a', accent: '#f472b6' },
+  { id: 'rigger', animal: '섬세한 마법사 문어', emoji: '🐙', title: '완벽한 구속과 선의 아티스트', bg1: '#1e1b4b', bg2: '#0f172a', accent: '#818cf8' },
+  { id: 'rope_bottom', animal: '자유로운 나비', emoji: '🦋', title: '구속 속에서 피어나는 명상가', bg1: '#082f49', bg2: '#0f172a', accent: '#38bdf8' },
+  { id: 'degrader', animal: '위엄있는 호랑이', emoji: '🐯', title: '자존심을 무장해제시키는 심리술사', bg1: '#3f0c10', bg2: '#0f172a', accent: '#f87171' },
+  { id: 'degradee', animal: '솔직한 충견 강아지', emoji: '🐶', title: '솔직한 복종 속에서 자유를 찾는 순정파', bg1: '#172554', bg2: '#0f172a', accent: '#60a5fa' }
 ];
 
 const outDir = path.join(process.cwd(), 'public', 'images', 'traits');
@@ -95,10 +95,10 @@ async function generateImages() {
       .png({ quality: 95 })
       .toFile(path.join(outDir, `${t.id}.png`));
 
-    console.log(`Generated ${t.id}.png & ${t.id}.svg`);
+    console.log(`Generated ${t.id}.png (${t.emoji} ${t.animal})`);
   }
 }
 
 generateImages().then(() => {
-  console.log('All 18 Trait PNG & SVG images successfully generated!');
+  console.log('All 18 Trait PNG & SVG images perfectly synchronized!');
 });
