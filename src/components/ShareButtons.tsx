@@ -15,7 +15,7 @@ interface ShareButtonsProps {
   scores: Record<TraitId, number>;
 }
 
-const PRODUCTION_DOMAIN = 'https://bdsm-tawny.vercel.app';
+const PRODUCTION_DOMAIN = 'https://bdsm-zero.vercel.app';
 
 export default function ShareButtons({
   primaryTraitId,

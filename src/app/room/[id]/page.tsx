@@ -11,7 +11,7 @@ import AdBanner from '@/components/AdBanner';
 import { loadKakaoSDK, shareKakaoFeed } from '@/lib/kakao';
 import { Users, Copy, Check, Sparkles, ArrowRight, UserPlus, MessageCircle } from 'lucide-react';
 
-const PRODUCTION_DOMAIN = 'https://bdsm-tawny.vercel.app';
+const PRODUCTION_DOMAIN = 'https://bdsm-zero.vercel.app';
 
 export default function RoomPage() {
   const params = useParams();
