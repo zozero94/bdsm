@@ -1,7 +1,8 @@
 // Kakao JS SDK Official Default Feed Template Implementation
 // Based on https://developers.kakao.com/docs/ko/message-template/default#feed-object
 
-export const KAKAO_APP_KEY = '91f0317e2a9d5d066924b829dc5e8318';
+export const KAKAO_APP_KEY =
+  process.env.NEXT_PUBLIC_KAKAO_JS_KEY || '25064adbf382bf6e0273e6da584c8017';
 const BASE_PRODUCTION_DOMAIN = 'https://bdsm-zero.vercel.app';
 
 let kakaoSdkLoaded = false;
