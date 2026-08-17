@@ -17,6 +17,7 @@ export const metadata: Metadata = {
     'BDSM테스트',
     'BDSM 성향 테스트',
     'BDSM 성향 검사',
+    'BDSM 검사',
     '동물성향테스트',
     '심리테스트',
     '성격유형검사',
@@ -73,22 +74,54 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // JSON-LD Structured Data for Google Rich Snippets
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Quiz',
-    name: 'BDSM 동물 성향 테스트',
-    description:
-      '18가지 동물 캐릭터로 알아보는 정밀 BDSM 성향 검사 및 친구 간 케미 매칭',
-    url: SITE_URL,
-    provider: {
-      '@type': 'Organization',
-      name: 'BDSM 동물 성향 연구소',
-      url: SITE_URL
+  // JSON-LD Structured Data for Google Rich Snippets & FAQ
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Quiz',
+      name: 'BDSM 동물 성향 테스트',
+      description:
+        '18가지 동물 캐릭터로 알아보는 정밀 BDSM 성향 검사 및 친구 간 케미 매칭',
+      url: SITE_URL,
+      provider: {
+        '@type': 'Organization',
+        name: 'BDSM 동물 성향 연구소',
+        url: SITE_URL
+      },
+      educationalLevel: 'Beginner',
+      assesses: 'BDSM Traits and Compatibility'
     },
-    educationalLevel: 'Beginner',
-    assesses: 'BDSM Traits and Compatibility'
-  };
+    {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: [
+        {
+          '@type': 'Question',
+          name: 'BDSM 동물 성향 테스트는 무엇인가요?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: '도미넌트, 서브미시브, 사디스트, 마조히스트, 스위치 등 18가지 성향 지표를 동물 캐릭터로 시각화한 무료 온라인 심리테스트입니다.'
+          }
+        },
+        {
+          '@type': 'Question',
+          name: '검사 결과와 개인정보는 안전한가요?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: '100% 완전한 익명으로 진행되며, 회원가입이나 개인정보 입력 없이 닉네임만으로 검사를 수행할 수 있습니다.'
+          }
+        },
+        {
+          '@type': 'Question',
+          name: '친구와의 궁합(케미)은 어떻게 확인하나요?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: '검사 완료 후 결과 페이지에서 모임 방을 만들고 친구들에게 링크를 공유하면 실시간으로 궁합 관계도가 완성됩니다.'
+          }
+        }
+      ]
+    }
+  ];
 
   return (
     <html lang="ko" className="dark">

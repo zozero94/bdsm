@@ -7,7 +7,18 @@ import { TraitId, TraitInfo } from '@/types/test';
 import CharacterAvatar from '@/components/CharacterAvatar';
 import TraitModal from '@/components/TraitModal';
 import AdBanner from '@/components/AdBanner';
-import { Sparkles, ArrowRight, ShieldCheck, HeartHandshake, Flame, BookOpen, AlertCircle } from 'lucide-react';
+import {
+  Sparkles,
+  ArrowRight,
+  ShieldCheck,
+  HeartHandshake,
+  Flame,
+  BookOpen,
+  AlertCircle,
+  HelpCircle,
+  Compass,
+  CheckCircle2
+} from 'lucide-react';
 
 export default function HomePage() {
   const router = useRouter();
@@ -151,7 +162,7 @@ export default function HomePage() {
       </div>
 
       {/* 18 Traits Preview Showcase with Modal Trigger */}
-      <div className="w-full mt-4 rounded-3xl bg-slate-900/60 border border-slate-800/80 p-5">
+      <div className="w-full mt-2 rounded-3xl bg-slate-900/60 border border-slate-800/80 p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-purple-400" />
@@ -182,6 +193,68 @@ export default function HomePage() {
               </span>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* SEO & Guide Section 1: What is BDSM Animal Test? */}
+      <div className="w-full rounded-3xl bg-slate-900/40 border border-slate-800/60 p-5 flex flex-col gap-3 text-left">
+        <div className="flex items-center gap-2 text-purple-300">
+          <Compass className="w-4 h-4" />
+          <h2 className="text-sm font-bold text-white">
+            BDSM 동물 성향 테스트란 무엇인가요?
+          </h2>
+        </div>
+        <p className="text-xs text-slate-300 leading-relaxed">
+          본 테스트는 전통적인 <strong>BDSM 성향 검사</strong> 지표(도미넌트, 서브미시브, 사디스트, 마조히스트, 스위치 등)를 현대 심리학적 가중치 알고리즘과 결합하여, <strong>18가지 고유한 동물 캐릭터</strong>로 알기 쉽게 시각화한 무료 온라인 심리테스트입니다.
+        </p>
+        <div className="grid grid-cols-2 gap-2 pt-1 text-[11px] text-slate-400">
+          <div className="p-2.5 rounded-xl bg-slate-950/50 border border-slate-800 flex items-start gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-purple-400 shrink-0 mt-0.5" />
+            <span>36개 정밀 문항을 통한 다면적 성향 가중치 산출</span>
+          </div>
+          <div className="p-2.5 rounded-xl bg-slate-950/50 border border-slate-800 flex items-start gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-pink-400 shrink-0 mt-0.5" />
+            <span>상대방과의 꿀케미 & 상극 케미 실시간 매칭</span>
+          </div>
+        </div>
+      </div>
+
+      {/* SEO & Guide Section 2: FAQ */}
+      <div className="w-full rounded-3xl bg-slate-900/40 border border-slate-800/60 p-5 flex flex-col gap-3.5 text-left">
+        <div className="flex items-center gap-2 text-pink-300">
+          <HelpCircle className="w-4 h-4" />
+          <h2 className="text-sm font-bold text-white">
+            BDSM 성향 검사 자주 묻는 질문 (FAQ)
+          </h2>
+        </div>
+
+        <div className="flex flex-col gap-3 text-xs">
+          <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800/70 flex flex-col gap-1">
+            <h3 className="font-bold text-purple-200">
+              Q. 검사 결과와 개인정보는 안전하게 보호되나요?
+            </h3>
+            <p className="text-slate-400 text-[11px] leading-relaxed">
+              네, 100% 완전한 익명으로 진행됩니다. 회원가입이나 개인정보 입력 없이 닉네임만으로 검사를 수행할 수 있으며, 서버에 개인 식별 정보가 저장되지 않습니다.
+            </p>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800/70 flex flex-col gap-1">
+            <h3 className="font-bold text-purple-200">
+              Q. 친구나 연인과의 궁합(케미)은 어떻게 확인하나요?
+            </h3>
+            <p className="text-slate-400 text-[11px] leading-relaxed">
+              검사 완료 후 결과 페이지에서 <strong>[우리 모임 케미 방 만들기]</strong>를 클릭하면 고유 링크가 생성됩니다. 친구들에게 링크를 공유하면 실시간으로 서로 간의 꿀케미/상극 관계망 지도가 자동 완성됩니다.
+            </p>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800/70 flex flex-col gap-1">
+            <h3 className="font-bold text-purple-200">
+              Q. 18가지 성향 중 어떤 것들이 포함되어 있나요?
+            </h3>
+            <p className="text-slate-400 text-[11px] leading-relaxed">
+              지배자 계열(도미넌트, 마스터, 헌터, 디그레이더, 리더, 스팽커, 로프마스터), 피지배자 계열(서브미시브, 슬레이브, 프레이, 펫, 디그레이디, 피학자, 로프바텀, 스팽키), 그리고 유연한 전환자 계열(스위치, 브랫, 브랫테이머) 총 18종으로 세분화되어 있습니다.
+            </p>
+          </div>
         </div>
       </div>
 
