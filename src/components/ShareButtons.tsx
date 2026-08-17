@@ -35,11 +35,21 @@ export default function ShareButtons({
     setTimeout(() => setToastMessage(null), 2500);
   };
 
+  // Helper to get normalized, single-encoded result URL
+  const getCleanResultUrl = () => {
+    if (typeof window !== 'undefined') {
+      const search = window.location.search;
+      if (search) {
+        return `${PRODUCTION_DOMAIN}/result${search}`;
+      }
+      return window.location.href;
+    }
+    return resultUrl || `${PRODUCTION_DOMAIN}/result`;
+  };
+
   // Standard Link Copy
   const handleCopyLink = async () => {
-    const targetUrl =
-      resultUrl || (typeof window !== 'undefined' ? window.location.href : `${PRODUCTION_DOMAIN}/result`);
-    
+    const targetUrl = getCleanResultUrl();
     const success = await copyToClipboard(targetUrl);
     if (success) {
       setCopied(true);
@@ -48,10 +58,9 @@ export default function ShareButtons({
     }
   };
 
-  // Exactly matches wedding invitation: loadKakaoSDK -> shareKakaoFeed -> fallback
+  // Direct Kakao Share with clean URL format
   const handleKakaoShare = () => {
-    const targetLink =
-      resultUrl || (typeof window !== 'undefined' ? window.location.href : `${PRODUCTION_DOMAIN}/result`);
+    const targetLink = getCleanResultUrl();
     const shareTitle = `${nickname ? nickname + '님의 ' : ''}BDSM 성향: [${trait.animal}]`;
     const shareDesc = `"${trait.title}" - 나와의 성향 궁합을 확인해보세요!`;
     const staticThumbnail = `${PRODUCTION_DOMAIN}/app-icon.png`;

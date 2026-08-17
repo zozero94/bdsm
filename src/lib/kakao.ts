@@ -97,9 +97,7 @@ export function shareKakaoFeed({
   }
 
   const validImageUrl = imageUrl || `${BASE_PRODUCTION_DOMAIN}/app-icon.png`;
-  // Ensure robust URI encoding to prevent 4002 parameter syntax errors
-  const rawUrl = targetUrl || BASE_PRODUCTION_DOMAIN;
-  const validTargetUrl = encodeURI(rawUrl);
+  const validTargetUrl = targetUrl || BASE_PRODUCTION_DOMAIN;
 
   try {
     kakao.Share.sendDefault({
