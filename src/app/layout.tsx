@@ -4,7 +4,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Script from 'next/script';
 
-const SITE_URL = 'https://bdsm-zero.vercel.app';
+const SITE_URL = 'https://bdsm.zozero94.com';
 const ADSENSE_CLIENT_ID =
   process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || 'ca-pub-4169469417741632';
 

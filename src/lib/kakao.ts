@@ -2,7 +2,7 @@
 // Key: b284a968f36e582c3034ecfe545e179b
 
 export const KAKAO_APP_KEY = 'b284a968f36e582c3034ecfe545e179b';
-const BASE_PRODUCTION_DOMAIN = 'https://bdsm-zero.vercel.app';
+const BASE_PRODUCTION_DOMAIN = 'https://bdsm.zozero94.com';
 
 let kakaoSdkLoaded = false;
 let kakaoSdkLoading = false;

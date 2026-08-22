@@ -12,7 +12,7 @@ import { loadKakaoSDK, shareKakaoFeed } from '@/lib/kakao';
 import { copyToClipboard } from '@/lib/clipboard';
 import { Users, Copy, Check, Sparkles, ArrowRight, UserPlus, MessageCircle } from 'lucide-react';
 
-const PRODUCTION_DOMAIN = 'https://bdsm-zero.vercel.app';
+const PRODUCTION_DOMAIN = 'https://bdsm.zozero94.com';
 
 export default function RoomPage() {
   const params = useParams();
